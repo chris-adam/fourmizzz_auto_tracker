@@ -26,7 +26,7 @@ def verifier_connexion():
         return False
 
     options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
+    # options.add_argument('--headless')
     options.add_argument("--start-maximized")
     driver = webdriver.Chrome(options=options)
 
@@ -41,6 +41,7 @@ def verifier_connexion():
 
         wait_for_elem(driver, "//*[@id='loginForm']/input[2]", By.XPATH).click()
 
+        sleep(30)
         wait_for_elem(driver, "/html/body/div[4]/table[2]/tbody/tr[1]/td[4]/form/table/tbody/tr/td[2]/div/input",
                       By.XPATH, tps=3, n_essais=1)
     except TimeoutException:
@@ -54,11 +55,7 @@ def verifier_connexion():
 
 def get_driver():
     url = "http://" + get_serveur() + ".fourmizzz.fr"
-
-    try:
-        pseudo, mdp = get_identifiants()
-    except FileNotFoundError:
-        return False
+    pseudo, mdp = get_identifiants()
 
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
@@ -66,6 +63,7 @@ def get_driver():
     driver = webdriver.Chrome(options=options)
 
     driver.get(url)
+    driver.add_cookie({'name': "PHPSESSID", 'value': "qvhl5m23chghgo36tgs6brc6v4"})
 
     wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[2]/td[2]/input", By.XPATH).click()
     wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[2]/td[2]/input", By.XPATH).send_keys(pseudo)

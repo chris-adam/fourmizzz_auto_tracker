@@ -1,10 +1,9 @@
-import pandas as pd
-
 from tracker import tracker
 from tui import connexion
+from time import time
 
 if __name__ == "__main__":
-    connexion()
-
-    with pd.option_context("display.max_rows", None):
-        print(tracker.tdc())
+    # connexion()
+    start = time()
+    print(tracker.tdc())
+    print(time()-start, "s")
