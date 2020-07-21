@@ -50,3 +50,29 @@ def verifier_connexion():
         driver.quit()
 
     return True
+
+
+def get_driver():
+    url = "http://" + get_serveur() + ".fourmizzz.fr"
+
+    try:
+        pseudo, mdp = get_identifiants()
+    except FileNotFoundError:
+        return False
+
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument("--start-maximized")
+    driver = webdriver.Chrome(options=options)
+
+    driver.get(url)
+
+    wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[2]/td[2]/input", By.XPATH).click()
+    wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[2]/td[2]/input", By.XPATH).send_keys(pseudo)
+
+    wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[3]/td[2]/input", By.XPATH).click()
+    wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[3]/td[2]/input", By.XPATH).send_keys(mdp)
+
+    wait_for_elem(driver, "//*[@id='loginForm']/input[2]", By.XPATH).click()
+
+    return driver
