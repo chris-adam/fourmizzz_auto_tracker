@@ -7,8 +7,9 @@ import requests
 from bs4 import BeautifulSoup
 
 from data import get_serveur
+from web import get_list_joueurs_dans_alliance
 
-N_PAGES = 20
+N_PAGES = 30
 COLUMNS = ("Pseudo", "Tdc", "Fourmilière", "Technologie", "Trophées", "Alliance")
 
 
@@ -79,3 +80,32 @@ def merge_files():
         df = df.append(pd.read_pickle("tracker/tdc_temp/tdc_" + str(page)), ignore_index=True)
 
     return df
+
+
+def trouver_correspondance(res, pseudo):
+    if pseudo not in res.columns:
+        return
+
+    diff = res.at[res.index[1], pseudo] - res.at[res.index[0], pseudo]
+    correspondances = list()
+    for col in res.loc[:, res.columns != pseudo].columns[1:]:
+        if res.at[res.index[1], col] - res.at[res.index[0], col] == -diff:
+            correspondances.append(col)
+
+    return pd.concat([res.iloc[:, 0], res.loc[:, correspondances + [pseudo]]], axis=1)
+
+
+def iter_correspondances(res, cibles):
+    print("JOUEURS")
+    for joueur in cibles["Joueurs"]:
+        with pd.option_context("display.max_columns", None, "display.width", 180):
+            print(trouver_correspondance(res, joueur))
+
+    print("ALLIANCES")
+    for alliance in cibles["Alliances"]:
+        print("TAG", alliance)
+        lst_joueurs = get_list_joueurs_dans_alliance(alliance)
+        for joueur in lst_joueurs:
+            print("MEMBRE", joueur)
+            with pd.option_context("display.max_columns", None, "display.width", 180):
+                print(trouver_correspondance(res, joueur))

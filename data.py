@@ -9,5 +9,6 @@ def get_identifiants():
     with open("fichiers/identifiants.txt", "r") as identifiants:
         pseudo = identifiants.readline().strip()
         mdp = identifiants.readline().strip()
+        cookie = identifiants.readline().strip()
 
-    return pseudo, mdp
+    return pseudo, mdp, cookie
