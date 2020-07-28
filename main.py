@@ -7,8 +7,6 @@ from web import get_list_joueurs_dans_alliance
 
 if __name__ == "__main__":
     # connexion()
-    start = time()
-    res = tracker.compare()
-    cibles = {"Joueurs": [], "Alliances": ["SHAN"]}
-    tracker.iter_correspondances(res, cibles)
-    print(time()-start, "s")
+    cibles = {"Joueurs": [], "Alliances": ["SHAN", "Raf"]}
+    updater = tracker.TrackerLoop(cibles)
+    updater.start()

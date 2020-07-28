@@ -1,16 +1,31 @@
 from threading import Thread
 import os
 from datetime import datetime
+from time import time, sleep
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
 from data import get_serveur
-from web import get_list_joueurs_dans_alliance
+from web import get_list_joueurs_dans_alliance, post_forum
 
 N_PAGES = 30
 COLUMNS = ("Pseudo", "Tdc", "Fourmilière", "Technologie", "Trophées", "Alliance")
+
+
+class TrackerLoop(Thread):
+    def __init__(self, cibles):
+        Thread.__init__(self)
+        self.cibles = cibles
+
+    def run(self):
+        start_time = time()
+        while True:
+            if time() - start_time < 60:
+                start_time = time()
+                iter_correspondances(compare(), self.cibles)
+            sleep(3)
 
 
 class TdcSaver(Thread):
@@ -82,30 +97,45 @@ def merge_files():
     return df
 
 
-def trouver_correspondance(res, pseudo):
-    if pseudo not in res.columns:
-        return
+def trouver_correspondance(comparaison, pseudo):
+    if pseudo not in comparaison.columns:
+        return ""
 
-    diff = res.at[res.index[1], pseudo] - res.at[res.index[0], pseudo]
+    diff = comparaison.at[comparaison.index[1], pseudo] - comparaison.at[comparaison.index[0], pseudo]
     correspondances = list()
-    for col in res.loc[:, res.columns != pseudo].columns[1:]:
-        if res.at[res.index[1], col] - res.at[res.index[0], col] == -diff:
+    for col in comparaison.loc[:, comparaison.columns != pseudo].columns[1:]:
+        if comparaison.at[comparaison.index[1], col] - comparaison.at[comparaison.index[0], col] == -diff:
             correspondances.append(col)
 
-    return pd.concat([res.iloc[:, 0], res.loc[:, correspondances + [pseudo]]], axis=1)
+    resultat = comparaison.at[comparaison.index[1], "Date"].strftime("%m/%d/%Y %H:%M") + "\n"
+    resultat += (pseudo + ": " + '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " ")
+                 + " -> " + '{:,}'.format(comparaison.at[comparaison.index[1], pseudo])).replace(",", " ") + "\n\n"
+
+    if len(correspondances) == 0:
+        resultat += "Aucune correspondance trouvée. Le mouvement de tdc est une chasse, ou le joueur correspondant " \
+                    "est trop bas en tdc, ou plusieurs floods se sont croisés et le traçage est trop complexe."
+    else:
+        for correspondance in correspondances:
+            resultat += (correspondance + ": "
+                         + '{:,}'.format(comparaison.at[comparaison.index[0], correspondance]).replace(",", " ")
+                         + " -> "
+                         + '{:,}'.format(comparaison.at[comparaison.index[1], correspondance])).replace(",", " ") + "\n"
+
+    return resultat
 
 
 def iter_correspondances(res, cibles):
-    print("JOUEURS")
+    lst_messages = list()
+
     for joueur in cibles["Joueurs"]:
         with pd.option_context("display.max_columns", None, "display.width", 180):
-            print(trouver_correspondance(res, joueur))
+            lst_messages.append(trouver_correspondance(res, joueur))
 
-    print("ALLIANCES")
     for alliance in cibles["Alliances"]:
-        print("TAG", alliance)
         lst_joueurs = get_list_joueurs_dans_alliance(alliance)
         for joueur in lst_joueurs:
-            print("MEMBRE", joueur)
-            with pd.option_context("display.max_columns", None, "display.width", 180):
-                print(trouver_correspondance(res, joueur))
+            lst_messages.append(trouver_correspondance(res, joueur))
+
+    for message in list(filter(len, lst_messages)):
+        print(message)
+        post_forum(message, "21300", "test_tracker")

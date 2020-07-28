@@ -88,14 +88,14 @@ def post_forum(string, forum_id, sub_forum_name):
     :return: None
     """
 
-    url = "http://s1.fourmizzz.fr/alliance.php?forum_menu"
+    url = "http://s4.fourmizzz.fr/alliance.php?forum_menu"
 
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument("--start-maximized")
     driver = webdriver.Chrome(options=options)
     try:
-        driver.get(url)
+        driver.get("http://s4.fourmizzz.fr")
         driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
         driver.get(url)
 
