@@ -144,6 +144,7 @@ class PostForum(Thread):
 
                 # Waits if the element didn't load yet
                 except (StaleElementReferenceException, IndexError):
+                    print("test")
                     sleep(0.5)
                 # Leave the loop if there is no more sub forum to read
                 except TimeoutException:

@@ -118,7 +118,8 @@ def trouver_correspondance(comparaison, pseudo):
         if comparaison.at[comparaison.index[1], col] - comparaison.at[comparaison.index[0], col] == -diff:
             correspondances.append(col)
 
-    resultat = (pseudo + ": " + '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " ")
+    resultat = ("[player]" + pseudo + "[/player]" + ": "
+                + '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " ")
                 + " -> " + '{:,}'.format(comparaison.at[comparaison.index[1], pseudo])).replace(",", " ") + "\n\n"
 
     if len(correspondances) == 0:
@@ -126,7 +127,7 @@ def trouver_correspondance(comparaison, pseudo):
                     "est trop bas en tdc, ou plusieurs floods se sont croisés et le traçage est trop complexe."
     else:
         for correspondance in correspondances:
-            resultat += (correspondance + ": "
+            resultat += ("[player]" + correspondance + "[/player]" + ": "
                          + '{:,}'.format(comparaison.at[comparaison.index[0], correspondance]).replace(",", " ")
                          + " -> "
                          + '{:,}'.format(comparaison.at[comparaison.index[1], correspondance])).replace(",", " ") + "\n"
