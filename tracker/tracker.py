@@ -26,9 +26,10 @@ class TrackerLoop(Thread):
         next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
-                print("start", datetime.now())
+                print("start", next_time)
                 next_time += timedelta(minutes=1)
                 iter_correspondances(compare(), self.cibles)
+                print("end", datetime.now())
             sleep(3)
 
     def stop(self):

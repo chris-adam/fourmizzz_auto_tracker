@@ -130,7 +130,7 @@ class PostForum(Thread):
                                                By.XPATH, 2).text
 
                     # Click to open the sub forum
-                    if topic_name.startswith(self.sub_forum_name):
+                    if topic_name.lower().startswith(self.sub_forum_name.lower()):
                         wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
                                       By.XPATH, 2).click()
                         sleep(5)  # Wait for the page to load
