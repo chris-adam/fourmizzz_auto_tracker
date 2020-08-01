@@ -8,24 +8,33 @@ import requests
 from bs4 import BeautifulSoup
 
 from data import get_serveur
-from web import get_list_joueurs_dans_alliance, post_forum
+from web import get_list_joueurs_dans_alliance, PostForum
 
 N_PAGES = 30
 COLUMNS = ("Pseudo", "Tdc", "Fourmilière", "Technologie", "Trophées", "Alliance")
 
 
 class TrackerLoop(Thread):
-    def __init__(self, cibles):
+    def __init__(self):
         Thread.__init__(self)
-        self.cibles = cibles
+        if not os.path.exists("fichiers/cibles"):
+            pd.DataFrame(columns=["Type", "Nom", "ID forum"]).to_pickle("fichiers/cibles")
+        self.cibles = pd.read_pickle("fichiers/cibles")
+        self.pursue = True
 
     def run(self):
-        start_time = time()
-        while True:
-            if time() - start_time < 60:
+        start_time = time()-60
+        while self.pursue:
+            if time() - start_time >= 60:
                 start_time = time()
                 iter_correspondances(compare(), self.cibles)
             sleep(3)
+
+    def stop(self):
+        self.pursue = False
+
+    def __str__(self):
+        return "Tracker"
 
 
 class TdcSaver(Thread):
@@ -107,9 +116,8 @@ def trouver_correspondance(comparaison, pseudo):
         if comparaison.at[comparaison.index[1], col] - comparaison.at[comparaison.index[0], col] == -diff:
             correspondances.append(col)
 
-    resultat = comparaison.at[comparaison.index[1], "Date"].strftime("%m/%d/%Y %H:%M") + "\n"
-    resultat += (pseudo + ": " + '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " ")
-                 + " -> " + '{:,}'.format(comparaison.at[comparaison.index[1], pseudo])).replace(",", " ") + "\n\n"
+    resultat = (pseudo + ": " + '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " ")
+                + " -> " + '{:,}'.format(comparaison.at[comparaison.index[1], pseudo])).replace(",", " ") + "\n\n"
 
     if len(correspondances) == 0:
         resultat += "Aucune correspondance trouvée. Le mouvement de tdc est une chasse, ou le joueur correspondant " \
@@ -125,17 +133,16 @@ def trouver_correspondance(comparaison, pseudo):
 
 
 def iter_correspondances(res, cibles):
-    lst_messages = list()
+    for i, row in cibles.iterrows():
+        type_cible, nom, id_forum = row
 
-    for joueur in cibles["Joueurs"]:
-        with pd.option_context("display.max_columns", None, "display.width", 180):
-            lst_messages.append(trouver_correspondance(res, joueur))
+        if type_cible == "Joueur":
+            message = trouver_correspondance(res, nom)
+            if message != "":
+                PostForum(message, "forum"+id_forum, nom).start()
 
-    for alliance in cibles["Alliances"]:
-        lst_joueurs = get_list_joueurs_dans_alliance(alliance)
-        for joueur in lst_joueurs:
-            lst_messages.append(trouver_correspondance(res, joueur))
-
-    for message in list(filter(len, lst_messages)):
-        print(message)
-        post_forum(message, "21300", "test_tracker")
+        elif type_cible == "Alliance":
+            for membre in get_list_joueurs_dans_alliance(nom):
+                message = trouver_correspondance(res, membre)
+                if message != "":
+                    PostForum(message, id_forum, membre).start()

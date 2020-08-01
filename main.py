@@ -1,12 +1,23 @@
-import pandas as pd
-
 from tracker import tracker
-from tui import connexion
-from time import time
-from web import get_list_joueurs_dans_alliance
+import tui
 
 if __name__ == "__main__":
+
     # connexion()
-    cibles = {"Joueurs": [], "Alliances": ["SHAN", "Raf"]}
-    updater = tracker.TrackerLoop(cibles)
-    updater.start()
+
+    updaters = list()
+    updaters.append(tracker.TrackerLoop())
+
+    for uptater in updaters:
+        uptater.start()
+
+    tui.main_menu(updaters)
+
+    for uptater in updaters:
+        uptater.stop()
+
+    for uptater in updaters:
+        print("En attente de l'arrêt de \"{}\"".format(uptater))
+        uptater.join()
+
+    print("Programme arrêté")
