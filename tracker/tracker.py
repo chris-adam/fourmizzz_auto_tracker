@@ -1,6 +1,6 @@
 from threading import Thread
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import time, sleep
 
 import pandas as pd
@@ -23,10 +23,11 @@ class TrackerLoop(Thread):
         self.pursue = True
 
     def run(self):
-        start_time = time()-60
+        next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
-            if time() - start_time >= 60:
-                start_time = time()
+            if next_time <= datetime.now():
+                print("start", datetime.now())
+                next_time += timedelta(minutes=1)
                 iter_correspondances(compare(), self.cibles)
             sleep(3)
 
