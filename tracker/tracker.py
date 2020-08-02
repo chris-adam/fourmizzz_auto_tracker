@@ -26,12 +26,10 @@ class TrackerLoop(Thread):
         next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
-                print("--- start", next_time)
+                print("\n--- start", next_time)  # TODO à enlever si le programme ne plante plus
                 comp = compare()
-                print("comparaison terminée")
                 iter_correspondances(comp, self.cibles)
                 next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
-                print("--- end", datetime.now())
             sleep(5)
 
     def stop(self):
@@ -49,7 +47,6 @@ class TdcSaver(Thread):
                    + self.page + "&typeClassement=terrain"
 
     def run(self):
-        print("Thread commencé", self.page, "/", self.__str__())
         cookies = {"PHPSESSID": "qvhl5m23chghgo36tgs6brc6v4"}
         r = requests.get(self.url, cookies=cookies)
         soup = BeautifulSoup(r.text, "html.parser")
@@ -71,18 +68,14 @@ class TdcSaver(Thread):
         df.columns = COLUMNS
         df["Tdc"] = [int(tdc.replace(" ", "")) for tdc in df["Tdc"]]
         df.to_pickle("tracker/tdc_temp/tdc_" + self.page)
-        print("Thread fini", self.page)
 
 
 def scrap_tdc():
     tdc_saver_lst = [TdcSaver(i) for i in range(1, N_PAGES+1)]
-    print("longueur de liste:", len(tdc_saver_lst))
     for tdc_saver in tdc_saver_lst:
         tdc_saver.start()
-    print("Tous les threads sont lancés")
     for i, tdc_saver in enumerate(tdc_saver_lst):
         tdc_saver.join()
-    print("les threads sont finis")
 
 
 def compare():
@@ -95,9 +88,7 @@ def compare():
     date = datetime.fromtimestamp(date).replace(microsecond=0)
     releve_1 = pd.concat([pd.DataFrame(dict(Date=[date])), releve_1], axis=1)
 
-    print("scrapping...")
     scrap_tdc()
-    print("scrapped")
     releve_2 = merge_files()
     releve_2 = pd.DataFrame({row[0]: [row[1]] for index, row in releve_2.loc[:, ["Pseudo", "Tdc"]].iterrows()})
     releve_2 = pd.concat([pd.DataFrame(dict(Date=[datetime.now().replace(microsecond=0)])), releve_2], axis=1)
