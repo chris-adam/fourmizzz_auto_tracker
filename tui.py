@@ -60,6 +60,7 @@ def main_menu(updaters):
 
 
 def connexion():
+    print("Connexion en cours ...")
     while not verifier_connexion():
         print("Identifiants inconnus ou erronés")
         update_identifiants()
@@ -68,8 +69,11 @@ def connexion():
 def update_identifiants():
     pseudo = input("Pseudo: ")
     mdp = input("Mot de passe: ")
+    cookie_token = input("Cookie d'auto-connection: ")
 
     with open("fichiers/identifiants.txt", "w+") as identifiants:
         identifiants.write(pseudo)
         identifiants.write("\n")
         identifiants.write(mdp)
+        identifiants.write("\n")
+        identifiants.write(cookie_token)

@@ -3,7 +3,7 @@ import tui
 
 if __name__ == "__main__":
 
-    # connexion()
+    tui.connexion()
 
     updaters = list()
     updaters.append(tracker.TrackerLoop())

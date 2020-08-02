@@ -25,17 +25,18 @@ def verifier_connexion():
     url = "http://" + get_serveur() + ".fourmizzz.fr"
 
     try:
-        pseudo, mdp = get_identifiants()
+        pseudo, mdp, cookie_token = get_identifiants()
     except FileNotFoundError:
         return False
 
     options = webdriver.ChromeOptions()
-    # options.add_argument('--headless')
+    options.add_argument('--headless')
     options.add_argument("--start-maximized")
     driver = webdriver.Chrome(options=options)
 
     try:
         driver.get(url)
+        driver.add_cookie({'name': "PHPSESSID", 'value': cookie_token})
 
         wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[2]/td[2]/input", By.XPATH).click()
         wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[2]/td[2]/input", By.XPATH).send_keys(pseudo)
@@ -45,7 +46,6 @@ def verifier_connexion():
 
         wait_for_elem(driver, "//*[@id='loginForm']/input[2]", By.XPATH).click()
 
-        sleep(30)
         wait_for_elem(driver, "/html/body/div[4]/table[2]/tbody/tr[1]/td[4]/form/table/tbody/tr/td[2]/div/input",
                       By.XPATH, tps=3, n_essais=1)
     except TimeoutException:
@@ -100,7 +100,7 @@ class PostForum(Thread):
         url = "http://s4.fourmizzz.fr/alliance.php?forum_menu"
 
         options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
+        # options.add_argument('--headless')
         options.add_argument("--start-maximized")
         driver = webdriver.Chrome(options=options)
         try:
@@ -144,7 +144,6 @@ class PostForum(Thread):
 
                 # Waits if the element didn't load yet
                 except (StaleElementReferenceException, IndexError):
-                    print("test")
                     sleep(0.5)
                 # Leave the loop if there is no more sub forum to read
                 except TimeoutException:
