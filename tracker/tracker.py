@@ -29,6 +29,8 @@ class TrackerLoop(Thread):
                 print("\n--- start", next_time)  # TODO à enlever si le programme ne plante plus
                 comp = compare()
                 iter_correspondances(comp, self.cibles)
+                # TODO à enlever si le programme ne plante plus
+                print("--- end", datetime.now().replace(microsecond=0))
                 next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
             sleep(5)
 
