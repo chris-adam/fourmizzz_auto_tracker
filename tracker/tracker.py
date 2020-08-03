@@ -144,7 +144,7 @@ def iter_correspondances(res, cibles):
         if type_cible == "Joueur":
             message = trouver_correspondance(res, nom)
             if message != "":
-                PostForum(message, "forum"+id_forum, nom).start()
+                PostForum(message, id_forum, nom).start()
 
         elif type_cible == "Alliance":
             for membre in get_list_joueurs_dans_alliance(nom):

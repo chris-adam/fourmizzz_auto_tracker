@@ -1,5 +1,6 @@
 from time import sleep
 from threading import Thread
+from datetime import datetime
 
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
@@ -90,8 +91,8 @@ class PostForum(Thread):
         :return: None
         """
         Thread.__init__(self)
-        self.string = string
-        print(string)  # TODO à enlever
+        self.string = datetime.now().strftime("%m/%d/%Y %H:%M") + "\n\n" + string
+        print(self.string)  # TODO à enlever
         self.forum_id = "forum" + forum_id
         self.sub_forum_name = sub_forum_name
 
@@ -106,13 +107,16 @@ class PostForum(Thread):
         try:
             driver.get("http://s4.fourmizzz.fr")
             driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
+            sleep(10)
             driver.get(url)
 
             # Click on the forum name
             try:
-                wait_for_elem(driver, self.forum_id + ".categorie_forum", By.CLASS_NAME, tps=3, n_essais=3).click()
+                wait_for_elem(driver, self.forum_id + ".categorie_forum", By.CLASS_NAME).click()
             except TimeoutException:
                 wait_for_elem(driver, self.forum_id + ".ligne_paire", By.CLASS_NAME).click()
+
+            sleep(10)
 
             # Find the forum in which the message has to be posted
             i = 2
@@ -128,23 +132,18 @@ class PostForum(Thread):
 
                     topic_name = wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
                                                By.XPATH, 2).text
+                    print(topic_name)
 
                     # Click to open the sub forum
                     if topic_name.lower().startswith(self.sub_forum_name.lower()):
                         wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
                                       By.XPATH, 2).click()
-                        sleep(5)  # Wait for the page to load
+                        sleep(15)  # Wait for the page to load
                         break
-
-                    # Reset the forum
-                    driver.get(url)
-                    # Click on the forum name
-                    wait_for_elem(driver, self.forum_id, By.CLASS_NAME).click()
-                    sleep(1)
 
                 # Waits if the element didn't load yet
                 except (StaleElementReferenceException, IndexError):
-                    sleep(0.5)
+                    sleep(1)
                 # Leave the loop if there is no more sub forum to read
                 except TimeoutException:
                     print("Forum", self.sub_forum_name, "introuvable ou verrouillé")
@@ -157,6 +156,7 @@ class PostForum(Thread):
             # Click to open answer form
             wait_for_elem(driver, "span[style='position:relative;top:-5px", By.CSS_SELECTOR).click()
             # Enter text in the form
+            sleep(5)
             wait_for_elem(driver, "message", By.ID).click()
             driver.find_element_by_id("message").send_keys(self.string)
             # Click to send the message on the forum
