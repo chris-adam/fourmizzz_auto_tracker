@@ -7,7 +7,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from data import get_serveur
+from data import get_serveur, get_identifiants
 from web import get_list_joueurs_dans_alliance, PostForum
 
 N_PAGES = 50
@@ -47,7 +47,7 @@ class TdcSaver(Thread):
                    + self.page + "&typeClassement=terrain"
 
     def run(self):
-        cookies = {"PHPSESSID": "qvhl5m23chghgo36tgs6brc6v4"}
+        cookies = {"PHPSESSID": get_identifiants()[-1]}
         r = requests.get(self.url, cookies=cookies)
         soup = BeautifulSoup(r.text, "html.parser")
         table = soup.find("table", {"class": "tab_triable"})
