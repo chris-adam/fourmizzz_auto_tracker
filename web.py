@@ -92,6 +92,7 @@ class PostForum(Thread):
         """
         Thread.__init__(self)
         self.string = datetime.now().strftime("%m/%d/%Y %H:%M") + "\n\n" + string
+        print(self.string)
         self.forum_id = "forum" + forum_id
         self.sub_forum_name = sub_forum_name
 

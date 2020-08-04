@@ -120,19 +120,21 @@ def trouver_correspondance(comparaison, pseudo):
         if comparaison.at[comparaison.index[1], col] - comparaison.at[comparaison.index[0], col] == -diff:
             correspondances.append(col)
 
-    resultat = ("[player]" + pseudo + "[/player]" + ": "
-                + '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " ")
-                + " -> " + '{:,}'.format(comparaison.at[comparaison.index[1], pseudo])).replace(",", " ") + "\n\n"
+    resultat = ("[player]{}[/player]: {} -> {} ({})\n\n"
+                .format(pseudo, '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " "),
+                        '{:,}'.format(comparaison.at[comparaison.index[1], pseudo]).replace(",", " "),
+                        ("+" if diff > 0 else "-") + '{:,}'.format(diff).replace(",", " ")))
 
     if len(correspondances) == 0:
         resultat += "Aucune correspondance trouvée. Le mouvement de tdc est une chasse, ou le joueur correspondant " \
                     "est trop bas en tdc, ou plusieurs floods se sont croisés et le traçage est trop complexe."
     else:
         for correspondance in correspondances:
-            resultat += ("[player]" + correspondance + "[/player]" + ": "
-                         + '{:,}'.format(comparaison.at[comparaison.index[0], correspondance]).replace(",", " ")
-                         + " -> "
-                         + '{:,}'.format(comparaison.at[comparaison.index[1], correspondance])).replace(",", " ") + "\n"
+            resultat += ("[player]{}[/player]: {} -> {} ({})\n"
+                         .format(correspondance,
+                                 '{:,}'.format(comparaison.at[comparaison.index[0], correspondance]).replace(",", " "),
+                                 '{:,}'.format(comparaison.at[comparaison.index[1], correspondance]).replace(",", " "),
+                                 ("-" if diff > 0 else "+") + '{:,}'.format(diff).replace(",", " ")))
 
     return resultat
 
