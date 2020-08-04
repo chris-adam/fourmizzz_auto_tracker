@@ -92,7 +92,6 @@ class PostForum(Thread):
         """
         Thread.__init__(self)
         self.string = datetime.now().strftime("%m/%d/%Y %H:%M") + "\n\n" + string
-        print(self.string)  # TODO à enlever
         self.forum_id = "forum" + forum_id
         self.sub_forum_name = sub_forum_name
 
@@ -132,7 +131,6 @@ class PostForum(Thread):
 
                     topic_name = wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
                                                By.XPATH, 2).text
-                    print(topic_name)
 
                     # Click to open the sub forum
                     if topic_name.lower().startswith(self.sub_forum_name.lower()):
