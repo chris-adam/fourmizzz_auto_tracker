@@ -134,7 +134,7 @@ def trouver_correspondance(comparaison, pseudo):
     else:
         for correspondance in correspondances:
             pseudo_correspondance = get_alliance(correspondance)
-            resultat += ("[player]{}[/player]{}: {} -> {} ({})\n"
+            resultat += ("[player]{}[/player]({}): {} -> {} ({})\n"
                          .format(correspondance,
                                  "([ally]{}[/ally])".format(pseudo_correspondance)
                                  if pseudo_correspondance is not None else "",
