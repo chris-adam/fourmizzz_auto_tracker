@@ -121,9 +121,9 @@ def trouver_correspondance(comparaison, pseudo):
             correspondances.append(col)
 
     pseudo_alliance = get_alliance(pseudo)
-    resultat = ("[player]{}[/player]{}: {} -> {} ({})\n\n"
+    resultat = ("[player]{}[/player]({}): {} -> {} ({})\n\n"
                 .format(pseudo,
-                        "([ally]{}[/ally])".format(pseudo_alliance) if pseudo_alliance is not None else "",
+                        "[ally]{}[/ally]".format(pseudo_alliance) if pseudo_alliance is not None else "SA",
                         '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " "),
                         '{:,}'.format(comparaison.at[comparaison.index[1], pseudo]).replace(",", " "),
                         ("+" if diff > 0 else "") + '{:,}'.format(diff).replace(",", " ")))
@@ -136,8 +136,8 @@ def trouver_correspondance(comparaison, pseudo):
             pseudo_correspondance = get_alliance(correspondance)
             resultat += ("[player]{}[/player]({}): {} -> {} ({})\n"
                          .format(correspondance,
-                                 "([ally]{}[/ally])".format(pseudo_correspondance)
-                                 if pseudo_correspondance is not None else "",
+                                 "[ally]{}[/ally]".format(pseudo_correspondance)
+                                 if pseudo_correspondance is not None else "SA",
                                  '{:,}'.format(comparaison.at[comparaison.index[0], correspondance]).replace(",", " "),
                                  '{:,}'.format(comparaison.at[comparaison.index[1], correspondance]).replace(",", " "),
                                  ("" if diff > 0 else "+") + '{:,}'.format(-diff).replace(",", " ")))
