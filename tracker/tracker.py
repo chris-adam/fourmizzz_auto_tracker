@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from data import get_serveur, get_identifiants
-from web import get_list_joueurs_dans_alliance, PostForum
+from web import get_list_joueurs_dans_alliance, PostForum, get_alliance
 
 N_PAGES = 50
 COLUMNS = ("Pseudo", "Tdc", "Fourmilière", "Technologie", "Trophées", "Alliance")
@@ -120,8 +120,10 @@ def trouver_correspondance(comparaison, pseudo):
         if comparaison.at[comparaison.index[1], col] - comparaison.at[comparaison.index[0], col] == -diff:
             correspondances.append(col)
 
-    resultat = ("[player]{}[/player]: {} -> {} ({})\n\n"
+    pseudo_alliance = get_alliance(pseudo)
+    resultat = ("[player]{}[/player]{}: {} -> {} ({})\n\n"
                 .format(pseudo,
+                        "([ally]{}[/ally])".format(pseudo_alliance) if pseudo_alliance is not None else "",
                         '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " "),
                         '{:,}'.format(comparaison.at[comparaison.index[1], pseudo]).replace(",", " "),
                         ("+" if diff > 0 else "") + '{:,}'.format(diff).replace(",", " ")))
@@ -131,8 +133,11 @@ def trouver_correspondance(comparaison, pseudo):
                     "est trop bas en tdc, ou plusieurs floods se sont croisés et le traçage est trop complexe."
     else:
         for correspondance in correspondances:
-            resultat += ("[player]{}[/player]: {} -> {} ({})\n"
+            pseudo_correspondance = get_alliance(correspondance)
+            resultat += ("[player]{}[/player]{}: {} -> {} ({})\n"
                          .format(correspondance,
+                                 "([ally]{}[/ally])".format(pseudo_correspondance)
+                                 if pseudo_correspondance is not None else "",
                                  '{:,}'.format(comparaison.at[comparaison.index[0], correspondance]).replace(",", " "),
                                  '{:,}'.format(comparaison.at[comparaison.index[1], correspondance]).replace(",", " "),
                                  ("" if diff > 0 else "+") + '{:,}'.format(-diff).replace(",", " ")))

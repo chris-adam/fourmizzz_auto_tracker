@@ -184,3 +184,15 @@ def get_list_joueurs_dans_alliance(tag):
             releve = releve.append(pd.DataFrame({i: [a] for i, a in zip(titles, lst)}))
 
     return list(pseudo.text for pseudo in releve["Pseudo"])
+
+
+def get_alliance(pseudo):
+    url = "http://" + get_serveur() + ".fourmizzz.fr/Membre.php?Pseudo=" + pseudo
+    cookies = {'PHPSESSID': get_identifiants()[-1]}
+    r = requests.get(url, cookies=cookies)
+    soup = BeautifulSoup(r.text, "html.parser")
+    try:
+        # print(soup.prettify())
+        return soup.find("div", {"class": "boite_membre"}).find("table").find("tr").find_all("td")[1].find("a").text
+    except AttributeError:
+        return
