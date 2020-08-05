@@ -1,11 +1,34 @@
-from web import verifier_connexion
+from threading import Thread
+from time import time, sleep
 
 import pandas as pd
+
+from web import verifier_connexion
 
 PATH_CIBLES = "fichiers/cibles"
 
 
+class AutoRepair(Thread):
+    def __init__(self, threads):
+        Thread.__init__(self)
+        self.pursue = True
+        self.threads = threads
+
+    def run(self):
+        start_time = time()
+        while self.pursue:
+            if time()-start_time > 3600/4:  # auto repair tous les quarts d'heure
+                repair(self.threads)
+            sleep(1)
+
+    def stop(self):
+        self.pursue = False
+
+
 def main_menu(updaters):
+    auto_repair = AutoRepair(updaters)
+    auto_repair.start()
+
     main_menu_text = "\n- ~ - MENU PRINCIPAL - ~ -\n" \
                      "1) Afficher joueurs/alliances surveillés\n" \
                      "2) Ajouter joueur\n" \
@@ -40,13 +63,7 @@ def main_menu(updaters):
                 ligne_a_supprimer = int(input("Numéro de la ligne à supprimer: "))
                 cibles = cibles.drop(ligne_a_supprimer).reset_index(drop=True)
             elif choice == 5:
-                for updater in updaters:
-                    if not updater.isAlive():
-                        updaters.remove(updater)
-                        new_thread = type(updater)()
-                        new_thread.start()
-                        updaters.append(new_thread)
-                        print(updater, "réparé")
+                repair(updaters)
                 print("Réparation terminée")
             elif choice == 6:
                 print("Vous quittez le programme ...")
@@ -57,6 +74,19 @@ def main_menu(updaters):
 
         except ValueError:
             print("Entrée erronée")
+
+    auto_repair.stop()
+    auto_repair.join()
+
+
+def repair(updaters):
+    for updater in updaters:
+        if not updater.isAlive():
+            updaters.remove(updater)
+            new_thread = type(updater)()
+            new_thread.start()
+            updaters.append(new_thread)
+            print(updater, "réparé")
 
 
 def connexion():

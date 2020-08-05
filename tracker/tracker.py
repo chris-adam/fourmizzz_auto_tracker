@@ -32,7 +32,7 @@ class TrackerLoop(Thread):
                 # TODO à enlever si le programme ne plante plus
                 print("--- end", datetime.now().replace(microsecond=0))
                 next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
-            sleep(5)
+            sleep(3)
 
     def stop(self):
         self.pursue = False
