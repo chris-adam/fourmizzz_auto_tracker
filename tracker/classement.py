@@ -1,6 +1,6 @@
-from threading import Thread
 import os
 from datetime import datetime, timedelta
+from threading import Thread
 from time import sleep
 
 import pandas as pd
@@ -23,22 +23,23 @@ class TrackerLoop(Thread):
         self.pursue = True
 
     def run(self):
-        next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
+        next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
-                print("\n--- start", next_time)  # TODO à enlever si le programme ne plante plus
+                # TODO à enlever si le programme ne plante plus
+                print("--- start classement", datetime.now().replace(microsecond=0))
                 comp = compare()
                 iter_correspondances(comp, self.cibles)
                 # TODO à enlever si le programme ne plante plus
-                print("--- end", datetime.now().replace(microsecond=0))
-                next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
+                print("--- end classement", datetime.now().replace(microsecond=0))
+                next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
     def stop(self):
         self.pursue = False
 
     def __str__(self):
-        return "Tracker"
+        return "Tracker de classement"
 
 
 class TdcSaver(Thread):
@@ -121,12 +122,13 @@ def trouver_correspondance(comparaison, pseudo):
             correspondances.append(col)
 
     pseudo_alliance = get_alliance(pseudo)
-    resultat = ("[player]{}[/player]({}): {} -> {} ({})\n\n"
-                .format(pseudo,
-                        "[ally]{}[/ally]".format(pseudo_alliance) if pseudo_alliance is not None else "SA",
-                        '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " "),
-                        '{:,}'.format(comparaison.at[comparaison.index[1], pseudo]).replace(",", " "),
-                        ("+" if diff > 0 else "") + '{:,}'.format(diff).replace(",", " ")))
+    resultat = datetime.now().strftime("%m/%d/%Y %H:%M") + " (décalage temporel)\n\n"
+    resultat += ("[player]{}[/player]({}): {} -> {} ({})\n\n"
+                 .format(pseudo,
+                         "[ally]{}[/ally]".format(pseudo_alliance) if pseudo_alliance is not None else "SA",
+                         '{:,}'.format(comparaison.at[comparaison.index[0], pseudo]).replace(",", " "),
+                         '{:,}'.format(comparaison.at[comparaison.index[1], pseudo]).replace(",", " "),
+                         ("+" if diff > 0 else "") + '{:,}'.format(diff).replace(",", " ")))
 
     if len(correspondances) == 0:
         resultat += "Aucune correspondance trouvée. Le mouvement de tdc est une chasse, ou le joueur correspondant " \

@@ -91,7 +91,7 @@ class PostForum(Thread):
         :return: None
         """
         Thread.__init__(self)
-        self.string = datetime.now().strftime("%m/%d/%Y %H:%M") + "\n\n" + string
+        self.string = string
         print(self.string)
         self.forum_id = "forum" + forum_id
         self.sub_forum_name = sub_forum_name
@@ -125,7 +125,7 @@ class PostForum(Thread):
                     # If the topic is locked, don't even try
                     if (len(driver.find_elements_by_xpath("//*[@id='form_cat']/table/tbody/tr["
                                                           + str(i) + "]/td[2]/img")) > 0
-                            and wait_for_elem(driver,"//*[@id='form_cat']/table/tbody/tr["+str(i)+"]/td[2]/img",
+                            and wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr["+str(i)+"]/td[2]/img",
                                               By.XPATH, 2).get_attribute('alt') == "Fermé"):
                         i += 2
                         continue
@@ -141,7 +141,8 @@ class PostForum(Thread):
                         break
 
                 # Waits if the element didn't load yet
-                except (StaleElementReferenceException, IndexError):
+                except StaleElementReferenceException:
+                    print("StaleElementReferenceException")
                     sleep(1)
                 # Leave the loop if there is no more sub forum to read
                 except TimeoutException:

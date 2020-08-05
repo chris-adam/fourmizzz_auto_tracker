@@ -17,7 +17,7 @@ class AutoRepair(Thread):
     def run(self):
         start_time = time()
         while self.pursue:
-            if time()-start_time > 3600/4:  # auto repair tous les quarts d'heure
+            if time()-start_time > 3600/6:  # auto repair toutes les 10 minutes
                 repair(self.threads)
             sleep(1)
 

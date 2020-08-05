@@ -1,4 +1,4 @@
-from tracker import tracker
+from tracker import precision, classement
 import tui
 
 if __name__ == "__main__":
@@ -6,7 +6,8 @@ if __name__ == "__main__":
     tui.connexion()
 
     updaters = list()
-    updaters.append(tracker.TrackerLoop())
+    updaters.append(classement.TrackerLoop())
+    updaters.append(precision.TrackerLoop())
 
     for uptater in updaters:
         uptater.start()
