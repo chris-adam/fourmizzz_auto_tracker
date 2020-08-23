@@ -101,7 +101,7 @@ class PostForum(Thread):
         url = "http://s4.fourmizzz.fr/alliance.php?forum_menu"
 
         options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
+        options.add_argument('--headless')
         options.add_argument("--start-maximized")
         options.add_argument("--no-sandbox")
         driver = webdriver.Chrome(options=options)
