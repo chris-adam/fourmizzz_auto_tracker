@@ -101,13 +101,13 @@ class PostForum(Thread):
         url = "http://s4.fourmizzz.fr/alliance.php?forum_menu"
 
         options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
+        # options.add_argument('--headless')
         options.add_argument("--start-maximized")
+        options.add_argument("--no-sandbox")
         driver = webdriver.Chrome(options=options)
         try:
             driver.get("http://s4.fourmizzz.fr")
             driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
-            sleep(10)
             driver.get(url)
 
             # Click on the forum name
@@ -115,8 +115,6 @@ class PostForum(Thread):
                 wait_for_elem(driver, self.forum_id + ".categorie_forum", By.CLASS_NAME).click()
             except TimeoutException:
                 wait_for_elem(driver, self.forum_id + ".ligne_paire", By.CLASS_NAME).click()
-
-            sleep(10)
 
             # Find the forum in which the message has to be posted
             i = 2
@@ -137,7 +135,7 @@ class PostForum(Thread):
                     if topic_name.lower().startswith(self.sub_forum_name.lower()):
                         wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
                                       By.XPATH, 2).click()
-                        sleep(15)  # Wait for the page to load
+                        sleep(5)  # Wait for the page to load
                         break
 
                 # Waits if the element didn't load yet
@@ -156,11 +154,12 @@ class PostForum(Thread):
             # Click to open answer form
             wait_for_elem(driver, "span[style='position:relative;top:-5px", By.CSS_SELECTOR).click()
             # Enter text in the form
-            sleep(5)
+            sleep(2)
             wait_for_elem(driver, "message", By.ID).click()
             driver.find_element_by_id("message").send_keys(self.string)
             # Click to send the message on the forum
             driver.find_element_by_id("repondre_focus").click()
+            sleep(1)
         finally:
             driver.close()
             driver.quit()
