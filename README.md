@@ -8,3 +8,5 @@ Sur fourmizzz, préparer un forum où chaque topic commence par le pseudo du jou
 Tout mouvement de tdc sera noté dans ce topic.
 Dans le cas d'une alliance, créer un topic par membre.
 Si le topic d'un joueur surveillé n'existe pas, rien ne sera posté.
+
+![Capture d'écran d'un traçage](https://zupimages.net/up/20/36/xzw4.png)
