@@ -1,24 +1,52 @@
-from tracker import precision, classement
+import os
+import traceback
+import logging as lg
+import platform
+
 import tui
+from tracker import precision, classement
+
 
 if __name__ == "__main__":
 
-    tui.connexion()
+    try:
+        lg.basicConfig(format='%(levelname)s - %(asctime)-15s: %(message)s',
+                       datefmt="%Y/%m/%d %H:%M:%S",
+                       level=lg.INFO)
 
-    updaters = list()
-    updaters.append(classement.TrackerLoop())
-    updaters.append(precision.TrackerLoop())
+        tui.connexion()
 
-    for uptater in updaters:
-        uptater.start()
+        updaters = list()
+        updaters.append(classement.TrackerLoop())
+        updaters.append(precision.TrackerLoop())
 
-    tui.main_menu(updaters)
+        for uptater in updaters:
+            uptater.start()
 
-    for uptater in updaters:
-        uptater.stop()
+        tui.main_menu(updaters)
 
-    for uptater in updaters:
-        print("En attente de l'arrêt de \"{}\"".format(uptater))
-        uptater.join()
+        for uptater in updaters:
+            uptater.stop()
 
-    print("Programme arrêté")
+        for uptater in updaters:
+            lg.info("En attente de l'arrêt de \"{}\"".format(uptater))
+            uptater.join()
+
+    except Exception:
+        if platform.system() == "Windows":
+            traceback.print_exc()
+            os.system("pause")
+        raise
+
+    finally:
+        # Efface les fichiers de sauvegarde de tdc pour éviter les incohérences lors du prochain lancement
+        lg.info("Suppression des fichiers temporaires...")
+        for folder in ("tracker/pseudo_temp/", "tracker/tdc_temp/"):
+            for filename in os.listdir(folder):
+                file_path = os.path.join(folder, filename)
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+        lg.info("Programme arrêté")

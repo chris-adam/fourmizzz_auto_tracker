@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 from threading import Thread
 from time import sleep
+import logging as lg
 
 import pandas as pd
 import requests
@@ -26,12 +27,11 @@ class TrackerLoop(Thread):
         next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
-                # TODO à enlever si le programme ne plante plus
-                print("--- start classement", datetime.now().replace(microsecond=0))
+                lg.info("Start classement")
                 comp = compare()
                 iter_correspondances(comp, self.cibles)
                 # TODO à enlever si le programme ne plante plus
-                print("--- end classement", datetime.now().replace(microsecond=0))
+                lg.info("End classement")
                 next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
             sleep(3)
 

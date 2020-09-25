@@ -1,3 +1,4 @@
+import logging as lg
 import os
 from datetime import datetime, timedelta
 from threading import Thread
@@ -23,15 +24,16 @@ class TrackerLoop(Thread):
         next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
-                # TODO à enlever si le programme ne plante plus
-                print("--- start precision", datetime.now().replace(microsecond=0))
+                lg.info("Start precision")
                 self.iter_cibles()
                 # TODO à enlever si le programme ne plante plus
-                print("--- end precision", datetime.now().replace(microsecond=0))
+                lg.info("End precision")
                 next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
     def iter_cibles(self):
+        self.cibles = pd.read_pickle("fichiers/cibles")
+
         for i, row in self.cibles.iterrows():
             type_cible, nom, id_forum = row
 
@@ -58,6 +60,9 @@ class ComparerTdc(Thread):
         self.path = "tracker/pseudo_temp/tdc_" + self.pseudo
 
     def run(self):
+        if not os.path.exists(self.path):
+            self.scrap_tdc()
+
         with open(self.path, "r") as file:
             old_tdc = int(file.readline().strip())
         new_tdc = self.scrap_tdc()

@@ -1,9 +1,9 @@
 from time import sleep
 from threading import Thread
-from datetime import datetime
+import logging as lg
 
 from selenium import webdriver
-from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -33,7 +33,10 @@ def verifier_connexion():
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument("--start-maximized")
-    driver = webdriver.Chrome(options=options)
+    try:
+        driver = webdriver.Chrome(options=options)
+    except OSError:
+        driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver", options=options)
 
     try:
         driver.get(url)
@@ -47,7 +50,7 @@ def verifier_connexion():
 
         wait_for_elem(driver, "//*[@id='loginForm']/input[2]", By.XPATH).click()
 
-        wait_for_elem(driver, "/html/body/div[4]/table[2]/tbody/tr[1]/td[4]/form/table/tbody/tr/td[2]/div/input",
+        wait_for_elem(driver, "/html/body/div[4]/table/tbody/tr[1]/td[4]/form/table/tbody/tr/td[1]/div[1]/input",
                       By.XPATH, tps=3, n_essais=1)
     except TimeoutException:
         return False
@@ -65,7 +68,10 @@ def get_driver():
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument("--start-maximized")
-    driver = webdriver.Chrome(options=options)
+    try:
+        driver = webdriver.Chrome(options=options)
+    except OSError:
+        driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver", options=options)
 
     driver.get(url)
     driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
@@ -104,7 +110,11 @@ class PostForum(Thread):
         options.add_argument('--headless')
         options.add_argument("--start-maximized")
         options.add_argument("--no-sandbox")
-        driver = webdriver.Chrome(options=options)
+        try:
+            driver = webdriver.Chrome(options=options)
+        except OSError:
+            driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver", options=options)
+
         try:
             driver.get("http://s4.fourmizzz.fr")
             driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
@@ -140,12 +150,11 @@ class PostForum(Thread):
 
                 # Waits if the element didn't load yet
                 except StaleElementReferenceException:
-                    print("StaleElementReferenceException")
                     sleep(1)
                 # Leave the loop if there is no more sub forum to read
                 except TimeoutException:
-                    print("Forum", self.sub_forum_name, "introuvable ou verrouillé")
-                    print(self.string)
+                    lg.info("Forum " + self.sub_forum_name + " introuvable ou verrouillé")
+                    lg.info(self.string)
                     break
                 # Go to the next sub forum
                 else:
@@ -160,6 +169,8 @@ class PostForum(Thread):
             # Click to send the message on the forum
             driver.find_element_by_id("repondre_focus").click()
             sleep(1)
+        except NoSuchElementException:
+            pass
         finally:
             driver.close()
             driver.quit()
