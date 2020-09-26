@@ -17,7 +17,7 @@ class AutoRepair(Thread):
     def run(self):
         start_time = time()
         while self.pursue:
-            if time()-start_time > 3600/6:  # auto repair toutes les 10 minutes
+            if time()-start_time > 3600//6:  # auto repair toutes les 10 minutes
                 repair(self.threads)
             sleep(1)
 
@@ -67,6 +67,8 @@ def main_menu(updaters):
                 print("Réparation terminée")
             elif choice == 6:
                 print("Vous quittez le programme ...")
+                auto_repair.stop()
+                auto_repair.join()
             else:
                 raise ValueError
 
@@ -74,9 +76,6 @@ def main_menu(updaters):
 
         except ValueError:
             print("Entrée erronée")
-
-    auto_repair.stop()
-    auto_repair.join()
 
 
 def repair(updaters):

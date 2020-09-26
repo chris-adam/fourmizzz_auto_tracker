@@ -1,6 +1,7 @@
 from time import sleep
 from threading import Thread
 import logging as lg
+import data
 
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchElementException
@@ -98,7 +99,6 @@ class PostForum(Thread):
         """
         Thread.__init__(self)
         self.string = string
-        print(self.string)
         self.forum_id = "forum" + forum_id
         self.sub_forum_name = sub_forum_name
 
@@ -153,8 +153,9 @@ class PostForum(Thread):
                     sleep(1)
                 # Leave the loop if there is no more sub forum to read
                 except TimeoutException:
-                    lg.info("Forum " + self.sub_forum_name + " introuvable ou verrouillé")
-                    lg.info(self.string)
+                    lg.warning("Forum " + self.sub_forum_name + " introuvable ou verrouillé\n" + self.string)
+                    send_pm(subject="Traçage non posté",
+                            text="Forum " + self.sub_forum_name + " introuvable ou verrouillé\n" + self.string)
                     break
                 # Go to the next sub forum
                 else:
@@ -207,3 +208,40 @@ def get_alliance(pseudo):
         return soup.find("div", {"class": "boite_membre"}).find("table").find("tr").find_all("td")[1].find("a").text
     except AttributeError:
         return
+
+
+def send_pm(player_name=None, subject="", text="No text"):
+    pseudo, mdp, phpssessid = data.get_identifiants()
+    serveur = data.get_serveur()
+
+    if player_name is None:
+        player_name = pseudo
+
+    url = "http://" + serveur + ".fourmizzz.fr/messagerie.php?defaut=Ecrire&destinataire=" + player_name
+    cookies = {'PHPSESSID': phpssessid}
+
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument("--start-maximized")
+    driver = webdriver.Chrome(options=options)
+    try:
+        driver.get(url)
+        for key, value in cookies.items():
+            driver.add_cookie({'name': key, 'value': value})
+        driver.get(url)
+
+        # write object
+        wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[2]/span/input", By.XPATH, 5).click()
+        wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[2]/span/input", By.XPATH, 5)\
+            .send_keys(subject)
+
+        # write main text
+        wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[3]/span/textarea", By.XPATH, 5).click()
+        wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[3]/span/textarea", By.XPATH, 5)\
+            .send_keys(text)
+
+        # send pm
+        wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[4]/span[1]/input", By.XPATH, 50).click()
+    finally:
+        driver.close()
+        driver.quit()

@@ -1,5 +1,6 @@
 import logging as lg
 import os
+import pickle
 from datetime import datetime, timedelta
 from threading import Thread
 from time import sleep
@@ -9,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from data import get_serveur, get_identifiants
-from web import get_list_joueurs_dans_alliance, PostForum, get_alliance
+from web import get_list_joueurs_dans_alliance
 
 
 class TrackerLoop(Thread):
@@ -17,7 +18,6 @@ class TrackerLoop(Thread):
         Thread.__init__(self)
         if not os.path.exists("fichiers/cibles"):
             pd.DataFrame(columns=["Type", "Nom", "ID forum"]).to_pickle("fichiers/cibles")
-        self.cibles = pd.read_pickle("fichiers/cibles")
         self.pursue = True
 
     def run(self):
@@ -25,16 +25,16 @@ class TrackerLoop(Thread):
         while self.pursue:
             if next_time <= datetime.now():
                 lg.info("Start precision")
-                self.iter_cibles()
-                # TODO à enlever si le programme ne plante plus
+                TrackerLoop.iter_cibles()
                 lg.info("End precision")
                 next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
-    def iter_cibles(self):
-        self.cibles = pd.read_pickle("fichiers/cibles")
+    @classmethod
+    def iter_cibles(cls):
+        cibles = pd.read_pickle("fichiers/cibles")
 
-        for i, row in self.cibles.iterrows():
+        for i, row in cibles.iterrows():
             type_cible, nom, id_forum = row
 
             if type_cible == "Joueur":
@@ -68,19 +68,13 @@ class ComparerTdc(Thread):
         new_tdc = self.scrap_tdc()
 
         if old_tdc != new_tdc:
-            diff = new_tdc - old_tdc
-            alliance = get_alliance(self.pseudo)
-            message = datetime.now().strftime("%m/%d/%Y %H:%M") + " (Temps exact)\n\n"
-            message += ("[player]{}[/player]({}): {} -> {} ({})\n\n"
-                        .format(self.pseudo,
-                                "[ally]{}[/ally]".format(alliance) if alliance is not None else "SA",
-                                '{:,}'.format(old_tdc).replace(",", " "),
-                                '{:,}'.format(new_tdc).replace(",", " "),
-                                ("+" if diff > 0 else "") + '{:,}'.format(diff).replace(",", " ")))
-
-            message += "Calcul de la correspondance en cours..."
-
-            PostForum(message, self.forum_id, self.pseudo).start()
+            queue = {"Date": datetime.now(),
+                     "Pseudo": self.pseudo,
+                     "Tdc avant": old_tdc,
+                     "Tdc après": new_tdc}
+            with open("tracker/queue/" + datetime.now().strftime("%Y-%m-%d_%Hh%M") + "_" + self.pseudo, "wb+") as file:
+                pickle.dump(queue, file)
+            lg.info("Ajouté à la queue:\n{}".format(queue))
 
     def scrap_tdc(self):
         cookies = {'PHPSESSID': get_identifiants()[-1]}
