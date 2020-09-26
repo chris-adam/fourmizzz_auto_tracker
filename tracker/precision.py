@@ -24,9 +24,9 @@ class TrackerLoop(Thread):
         next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
-                lg.info("Start precision")
+                lg.info("Début " + str(self))
                 TrackerLoop.iter_cibles()
-                lg.info("End precision")
+                lg.info("Fin " + str(self))
                 next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
@@ -48,7 +48,7 @@ class TrackerLoop(Thread):
         self.pursue = False
 
     def __str__(self):
-        return "Tracker de précision"
+        return "Traqueur de précision"
 
 
 class ComparerTdc(Thread):
@@ -71,10 +71,11 @@ class ComparerTdc(Thread):
             queue = {"Date": datetime.now(),
                      "Pseudo": self.pseudo,
                      "Tdc avant": old_tdc,
-                     "Tdc après": new_tdc}
-            with open("tracker/queue/" + datetime.now().strftime("%Y-%m-%d_%Hh%M") + "_" + self.pseudo, "wb+") as file:
+                     "Tdc après": new_tdc,
+                     "File name": "tracker/queue/" + datetime.now().strftime("%Y-%m-%d_%Hh%M") + "_" + self.pseudo}
+            with open(queue["File name"], "wb+") as file:
                 pickle.dump(queue, file)
-            lg.info("Ajouté à la queue:\n{}".format(queue))
+            lg.info("Ajouté à la queue: {}".format(queue))
 
     def scrap_tdc(self):
         cookies = {'PHPSESSID': get_identifiants()[-1]}

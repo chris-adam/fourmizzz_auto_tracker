@@ -2,6 +2,7 @@ from time import sleep
 from threading import Thread
 import logging as lg
 import data
+from boltons import iterutils
 
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchElementException
@@ -34,6 +35,9 @@ def verifier_connexion():
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument("--start-maximized")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-gpu")
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
     try:
         driver = webdriver.Chrome(options=options)
     except OSError:
@@ -69,6 +73,9 @@ def get_driver():
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument("--start-maximized")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-gpu")
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
     try:
         driver = webdriver.Chrome(options=options)
     except OSError:
@@ -110,6 +117,8 @@ class PostForum(Thread):
         options.add_argument('--headless')
         options.add_argument("--start-maximized")
         options.add_argument("--no-sandbox")
+        options.add_argument("--disable-gpu")
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
         try:
             driver = webdriver.Chrome(options=options)
         except OSError:
@@ -166,7 +175,8 @@ class PostForum(Thread):
             # Enter text in the form
             sleep(2)
             wait_for_elem(driver, "message", By.ID).click()
-            driver.find_element_by_id("message").send_keys(self.string)
+            for msg in iterutils.chunked(self.string, 32):
+                driver.find_element_by_id("message").send_keys(msg)
             # Click to send the message on the forum
             driver.find_element_by_id("repondre_focus").click()
             sleep(1)
@@ -204,7 +214,6 @@ def get_alliance(pseudo):
     r = requests.get(url, cookies=cookies)
     soup = BeautifulSoup(r.text, "html.parser")
     try:
-        # print(soup.prettify())
         return soup.find("div", {"class": "boite_membre"}).find("table").find("tr").find_all("td")[1].find("a").text
     except AttributeError:
         return
@@ -223,6 +232,9 @@ def send_pm(player_name=None, subject="", text="No text"):
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
     options.add_argument("--start-maximized")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-gpu")
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
     driver = webdriver.Chrome(options=options)
     try:
         driver.get(url)

@@ -27,11 +27,11 @@ class TrackerLoop(Thread):
         next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
-                lg.info("Start classement")
+                lg.info("Début " + str(self))
                 comp = compare()
                 if len(comp.columns) > 1:
                     iter_correspondances(comp)
-                lg.info("End classement")
+                lg.info("Fin " + str(self))
                 next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
@@ -39,7 +39,7 @@ class TrackerLoop(Thread):
         self.pursue = False
 
     def __str__(self):
-        return "Tracker de classement"
+        return "Traqueur de classement"
 
 
 class TdcSaver(Thread):
@@ -111,32 +111,34 @@ def merge_files():
     return df
 
 
-def trouver_correspondance(comparaison, mouvement):
+def trouver_correspondance(comparaison, mouvements):
     # Vérifie que le mouvement est présent dans l'analyse du classement
-    if mouvement["Pseudo"] not in comparaison.columns:
-        # Si ça fait plus de deux minutes que le mouvement est dans la queue, c'est pas normal
-        delta_t = datetime.now() - mouvement["Date"]
-        if delta_t > timedelta(minutes=2):
-            lg.warning("Le mouvement \"{}\" n'apparait pas dans l'analyse du classement".format(mouvement))
+    pseudo = mouvements[0]["Pseudo"]
+    if pseudo not in comparaison.columns:
         return ""
 
     # Prépare la première partie du message concernant la cible surveillée (date + variation de tdc)
-    diff = mouvement["Tdc après"] - mouvement["Tdc avant"]
-    pseudo_alliance = get_alliance(mouvement["Pseudo"])
-    message = "Heure exacte: {}\n\n".format(mouvement["Date"].strftime("%d/%m/%Y %H:%M"))
-    message += ("[player]{}[/player]({}): {} -> {} ({})\n\n"
-                .format(mouvement["Pseudo"],
-                        "[ally]{}[/ally]".format(pseudo_alliance) if pseudo_alliance is not None else "SA",
-                        '{:,}'.format(mouvement["Tdc avant"]).replace(",", " "),
-                        '{:,}'.format(mouvement["Tdc après"]).replace(",", " "),
-                        ("+" if diff > 0 else "") + '{:,}'.format(diff).replace(",", " ")))
+    message = ""
+    mouvements = sorted(mouvements, key=lambda x: x["Date"])
+    for mouvement in mouvements:
+        diff = mouvement["Tdc après"] - mouvement["Tdc avant"]
+        pseudo_alliance = get_alliance(mouvement["Pseudo"])
+        message += ("{}\n[player]{}[/player]({}): {} -> {} ({})\n"
+                    .format(mouvement["Date"].strftime("%d/%m/%Y %H:%M"),
+                            mouvement["Pseudo"],
+                            "[ally]{}[/ally]".format(pseudo_alliance) if pseudo_alliance is not None else "SA",
+                            '{:,}'.format(mouvement["Tdc avant"]).replace(",", " "),
+                            '{:,}'.format(mouvement["Tdc après"]).replace(",", " "),
+                            ("+" if diff > 0 else "") + '{:,}'.format(diff).replace(",", " ")))
+    diff = mouvements[-1]["Tdc après"] - mouvements[0]["Tdc avant"]
 
     # Cherche les correspondances dans le classement
     correspondances = list()
-    for col in comparaison.loc[:, comparaison.columns != mouvement["Pseudo"]].columns[1:]:
+    for col in comparaison.loc[:, comparaison.columns != pseudo].columns[1:]:
         if comparaison.at[comparaison.index[1], col] - comparaison.at[comparaison.index[0], col] == -diff:
             correspondances.append(col)
 
+    message += "\n"
     # Parfois, rien n'est trouvé: chasse, croisement de floods, échange C+, etc.
     if len(correspondances) == 0:
         message += "Aucune correspondance trouvée."
@@ -152,17 +154,21 @@ def trouver_correspondance(comparaison, mouvement):
                                 '{:,}'.format(comparaison.at[comparaison.index[1], correspondance]).replace(",", " "),
                                 ("" if diff > 0 else "+") + '{:,}'.format(-diff).replace(",", " ")))
 
-    # Supprime le mouvement de la queue pour qu'il ne soit plus analysé
-    try:
-        os.remove(mouvement["File name"])
-    except Exception as e:
-        lg.error("{}: Le mouvement \"{}\" n'a pas pu être supprimé de la queue".format(e, mouvement))
+    # Supprime les mouvements de la queue pour qu'ils ne soient plus analysés
+    for mouvement in mouvements:
+        file_name = mouvement["File name"]
+        try:
+            os.remove(file_name)
+        except Exception as e:
+            lg.error("{}: Le mouvement \"{}\" n'a pas pu être supprimé de la queue (fichier: {})"
+                     .format(e, mouvement, file_name))
 
     # Renvoie le message décrivant le traçage de la cible
     return message
 
 
 def iter_correspondances(comparaison):
+    # Récupère la queue
     folder = "tracker/queue/"
     queue = list()
     for filename in os.listdir(folder):
@@ -173,18 +179,27 @@ def iter_correspondances(comparaison):
         except Exception as e:
             lg.error('Failed to read {}. Reason: {}'.format(file_path, e))
         else:
-            queue_elem["File name"] = file_path
             queue.append(queue_elem)
 
+    # Fusionne les records des mêmes joueurs pour prendre en compte les floods fait entre deux minutes
+    dict_mouvements = dict()
+    for mouvement in queue:
+        if mouvement["Pseudo"] in dict_mouvements:
+            dict_mouvements[mouvement["Pseudo"]].append(mouvement)
+        else:
+            dict_mouvements[mouvement["Pseudo"]] = [mouvement]
+
+    # Récupère les cibles
     cibles = pd.read_pickle("fichiers/cibles").set_index("Nom")
 
-    for mouvement in queue:
-        message = trouver_correspondance(comparaison, mouvement)
+    # Trouve les correspondances pour tous les éléments dans la queue
+    for joueur, mouvements in dict_mouvements.items():
+        message = trouver_correspondance(comparaison, mouvements)
         try:
-            id_forum = cibles.at[mouvement["Pseudo"], "ID forum"]
+            id_forum = cibles.at[joueur, "ID forum"]
         except KeyError:
-            alliance = get_alliance(mouvement["Pseudo"])
+            alliance = get_alliance(joueur)
             id_forum = cibles.at[alliance, "ID forum"]
         if message != "":
-            PostForum(message, id_forum, mouvement["Pseudo"]).start()
+            PostForum(message, id_forum, joueur).start()
             lg.info("Mouvement de tdc posté sur le forum:\n{}".format(message))
