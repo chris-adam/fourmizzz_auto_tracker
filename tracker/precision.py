@@ -38,11 +38,11 @@ class TrackerLoop(Thread):
             type_cible, nom, id_forum = row
 
             if type_cible == "Joueur":
-                ComparerTdc(nom, id_forum).start()
+                ComparerTdc(nom).start()
 
             elif type_cible == "Alliance":
                 for membre in get_list_joueurs_dans_alliance(nom):
-                    ComparerTdc(membre, id_forum).start()
+                    ComparerTdc(membre).start()
 
     def stop(self):
         self.pursue = False
@@ -52,10 +52,9 @@ class TrackerLoop(Thread):
 
 
 class ComparerTdc(Thread):
-    def __init__(self, pseudo, forum_id):
+    def __init__(self, pseudo):
         Thread.__init__(self)
         self.pseudo = pseudo
-        self.forum_id = forum_id
         self.url = "http://" + get_serveur() + ".fourmizzz.fr/Membre.php?Pseudo=" + self.pseudo
         self.path = "tracker/pseudo_temp/tdc_" + self.pseudo
 
@@ -67,7 +66,7 @@ class ComparerTdc(Thread):
             old_tdc = int(file.readline().strip())
         new_tdc = self.scrap_tdc()
 
-        if old_tdc != new_tdc:
+        if new_tdc is not None and old_tdc != new_tdc:
             queue = {"Date": datetime.now(),
                      "Pseudo": self.pseudo,
                      "Tdc avant": old_tdc,
@@ -79,7 +78,11 @@ class ComparerTdc(Thread):
 
     def scrap_tdc(self):
         cookies = {'PHPSESSID': get_identifiants()[-1]}
-        r = requests.get(self.url, cookies=cookies)
+        try:
+            r = requests.get(self.url, cookies=cookies)
+        except requests.exceptions.ConnectionError:
+            lg.error("Erreur lors de l'ouverture du profil de {}".format(self.pseudo))
+            return
         soup = BeautifulSoup(r.text, "html.parser")
         tdc = soup.find("table", {"class": "tableau_score"}).find_all("tr")[1].find_all("td")[1].text.replace(" ", "")
         with open(self.path, "w+") as file:

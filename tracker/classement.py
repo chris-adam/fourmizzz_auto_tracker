@@ -4,6 +4,7 @@ from threading import Thread
 from time import sleep
 import logging as lg
 import pickle
+import sys
 
 import pandas as pd
 import requests
@@ -22,18 +23,27 @@ class TrackerLoop(Thread):
         if not os.path.exists("fichiers/cibles"):
             pd.DataFrame(columns=["Type", "Nom", "ID forum"]).to_pickle("fichiers/cibles")
         self.pursue = True
+        self.post_forum_thread = PostForum()
 
     def run(self):
+        self.post_forum_thread.start()
         next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
                 lg.info("Début " + str(self))
                 comp = compare()
                 if len(comp.columns) > 1:
-                    iter_correspondances(comp)
+                    self.post_forum_thread.extend_queue(iter_correspondances(comp))
                 lg.info("Fin " + str(self))
                 next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
             sleep(3)
+
+            if not self.post_forum_thread.isAlive():
+                self.post_forum_thread = PostForum(self.post_forum_thread.queue)
+                self.post_forum_thread.start()
+
+        self.post_forum_thread.stop()
+        self.post_forum_thread.join()
 
     def stop(self):
         self.pursue = False
@@ -51,7 +61,12 @@ class TdcSaver(Thread):
 
     def run(self):
         cookies = {"PHPSESSID": get_identifiants()[-1]}
-        r = requests.get(self.url, cookies=cookies)
+        try:
+            r = requests.get(self.url, cookies=cookies)
+        except requests.exceptions.ConnectionError:
+            lg.error("Erreur lors de l'ouverture de la page {} du classement".format(self.page))
+            sys.exit()
+
         soup = BeautifulSoup(r.text, "html.parser")
         table = soup.find("table", {"class": "tab_triable"})
         df = pd.DataFrame(columns=list(range(6)))
@@ -193,6 +208,7 @@ def iter_correspondances(comparaison):
     cibles = pd.read_pickle("fichiers/cibles").set_index("Nom")
 
     # Trouve les correspondances pour tous les éléments dans la queue
+    to_be_posted = list()
     for joueur, mouvements in dict_mouvements.items():
         message = trouver_correspondance(comparaison, mouvements)
         try:
@@ -201,5 +217,6 @@ def iter_correspondances(comparaison):
             alliance = get_alliance(joueur)
             id_forum = cibles.at[alliance, "ID forum"]
         if message != "":
-            PostForum(message, id_forum, joueur).start()
-            lg.info("Mouvement de tdc posté sur le forum:\n{}".format(message))
+            to_be_posted.append((message, id_forum, joueur))
+
+    return to_be_posted

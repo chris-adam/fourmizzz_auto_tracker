@@ -1,27 +1,27 @@
-from time import sleep
-from threading import Thread
 import logging as lg
-import data
-from boltons import iterutils
+from threading import Thread
+from time import sleep
 
+import pandas as pd
+import requests
+from boltons import iterutils
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
 
+import data
 from data import *
 
 
-def wait_for_elem(driver, elem, by, tps=10, n_essais=5):
+def wait_for_elem(driver, elem, by, tps=5, n_essais=5):
     for i in range(n_essais):
         try:
             return WebDriverWait(driver, tps).until(ec.presence_of_element_located((by, elem)))
-        except StaleElementReferenceException:
-            sleep(5)
+        except (StaleElementReferenceException, TimeoutException):
+            sleep(2)
 
 
 def verifier_connexion():
@@ -96,95 +96,109 @@ def get_driver():
 
 
 class PostForum(Thread):
-    def __init__(self, string, forum_id, sub_forum_name):
+    def __init__(self, queue=None):
         """
         Post a message on the fourmizzz forum
-        :param string: string to post
-        :param forum_id: id of the forum to click first
-        :param sub_forum_name: name of the forum in which to post
-        :return: None
         """
         Thread.__init__(self)
-        self.string = string
-        self.forum_id = "forum" + forum_id
-        self.sub_forum_name = sub_forum_name
+        self.queue = list()
+        if queue is not None:
+            self.queue.extend(queue)
+        self.stopped = False
 
     def run(self):
 
-        url = "http://s4.fourmizzz.fr/alliance.php?forum_menu"
-
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
-        options.add_argument("--start-maximized")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-gpu")
-        options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        try:
-            driver = webdriver.Chrome(options=options)
-        except OSError:
-            driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver", options=options)
-
-        try:
-            driver.get("http://s4.fourmizzz.fr")
-            driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
-            driver.get(url)
-
-            # Click on the forum name
+        while not self.stopped:
             try:
-                wait_for_elem(driver, self.forum_id + ".categorie_forum", By.CLASS_NAME).click()
-            except TimeoutException:
-                wait_for_elem(driver, self.forum_id + ".ligne_paire", By.CLASS_NAME).click()
+                string, forum_id, sub_forum_name = self.queue.pop(0)
+            except IndexError:
+                sleep(2)
+                continue
+            forum_id = "forum" + forum_id
 
-            # Find the forum in which the message has to be posted
-            i = 2
-            while i > 0:
+            url = "http://s4.fourmizzz.fr/alliance.php?forum_menu"
+
+            options = webdriver.ChromeOptions()
+            options.add_argument('--headless')
+            options.add_argument("--start-maximized")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-gpu")
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])
+            try:
+                driver = webdriver.Chrome(options=options)
+            except OSError:
+                driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver", options=options)
+
+            try:
+                driver.get("http://s4.fourmizzz.fr")
+                driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
+                driver.get(url)
+
+                # Click on the forum name
                 try:
-                    # If the topic is locked, don't even try
-                    if (len(driver.find_elements_by_xpath("//*[@id='form_cat']/table/tbody/tr["
-                                                          + str(i) + "]/td[2]/img")) > 0
-                            and wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr["+str(i)+"]/td[2]/img",
-                                              By.XPATH, 2).get_attribute('alt') == "Fermé"):
-                        i += 2
-                        continue
-
-                    topic_name = wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
-                                               By.XPATH, 2).text
-
-                    # Click to open the sub forum
-                    if topic_name.lower().startswith(self.sub_forum_name.lower()):
-                        wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
-                                      By.XPATH, 2).click()
-                        sleep(5)  # Wait for the page to load
-                        break
-
-                # Waits if the element didn't load yet
-                except StaleElementReferenceException:
-                    sleep(1)
-                # Leave the loop if there is no more sub forum to read
+                    wait_for_elem(driver, forum_id + ".categorie_forum", By.CLASS_NAME).click()
                 except TimeoutException:
-                    lg.warning("Forum " + self.sub_forum_name + " introuvable ou verrouillé\n" + self.string)
-                    send_pm(subject="Traçage non posté",
-                            text="Forum " + self.sub_forum_name + " introuvable ou verrouillé\n" + self.string)
-                    break
-                # Go to the next sub forum
-                else:
-                    i += 2
+                    wait_for_elem(driver, forum_id + ".ligne_paire", By.CLASS_NAME).click()
+                sleep(1)
 
-            # Click to open answer form
-            wait_for_elem(driver, "span[style='position:relative;top:-5px", By.CSS_SELECTOR).click()
-            # Enter text in the form
-            sleep(2)
-            wait_for_elem(driver, "message", By.ID).click()
-            for msg in iterutils.chunked(self.string, 32):
-                driver.find_element_by_id("message").send_keys(msg)
-            # Click to send the message on the forum
-            driver.find_element_by_id("repondre_focus").click()
-            sleep(1)
-        except NoSuchElementException:
-            pass
-        finally:
-            driver.close()
-            driver.quit()
+                # Find the forum in which the message has to be posted
+                i = 2
+                while i > 0:
+                    try:
+                        # If the topic is locked, don't even try
+                        if (len(driver.find_elements_by_xpath("//*[@id='form_cat']/table/tbody/tr["
+                                                              + str(i) + "]/td[2]/img")) > 0
+                                and wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr["+str(i)+"]/td[2]/img",
+                                                  By.XPATH).get_attribute('alt') == "Fermé"):
+                            i += 2
+                            continue
+
+                        topic_name = wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
+                                                   By.XPATH).text
+
+                        # Click to open the sub forum
+                        if topic_name.lower().startswith(sub_forum_name.lower()):
+                            wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
+                                          By.XPATH).click()
+                            sleep(5)  # Wait for the page to load
+                            break
+
+                    # Waits if the element didn't load yet
+                    except StaleElementReferenceException:
+                        sleep(1)
+                    # Leave the loop if there is no more sub forum to read
+                    except TimeoutException:
+                        lg.warning("Forum " + sub_forum_name + " introuvable ou verrouillé\n" + string)
+                        send_pm(subject="Traçage non posté",
+                                text="Forum " + sub_forum_name + " introuvable ou verrouillé\n" + string)
+                        break
+                    # Go to the next sub forum
+                    else:
+                        i += 2
+
+                # Click to open answer form
+                wait_for_elem(driver, "span[style='position:relative;top:-5px", By.CSS_SELECTOR).click()
+                sleep(2)
+                # Enter text in the form
+                wait_for_elem(driver, "message", By.ID).click()
+                for msg in iterutils.chunked(string, 32):
+                    driver.find_element_by_id("message").send_keys(msg)
+                # Click to send the message on the forum
+                driver.find_element_by_id("repondre_focus").click()
+                sleep(1)
+            except NoSuchElementException:
+                pass
+            else:
+                lg.info("Mouvement de tdc posté sur le forum:\n{}".format(string))
+            finally:
+                driver.close()
+                driver.quit()
+
+    def extend_queue(self, new_msg):
+        self.queue.extend(new_msg)
+
+    def stop(self):
+        self.stopped = True
 
 
 def get_list_joueurs_dans_alliance(tag):
@@ -246,14 +260,17 @@ def send_pm(player_name=None, subject="", text="No text"):
         wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[2]/span/input", By.XPATH, 5).click()
         wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[2]/span/input", By.XPATH, 5)\
             .send_keys(subject)
+        sleep(0.5)
 
         # write main text
         wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[3]/span/textarea", By.XPATH, 5).click()
         wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[3]/span/textarea", By.XPATH, 5)\
             .send_keys(text)
+        sleep(0.5)
 
         # send pm
         wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[4]/span[1]/input", By.XPATH, 50).click()
+        sleep(1)
     finally:
         driver.close()
         driver.quit()
