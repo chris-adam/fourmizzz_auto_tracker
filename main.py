@@ -1,8 +1,8 @@
-import os
-import traceback
-import logging as lg
-import platform
 import argparse
+import logging as lg
+import os
+import platform
+import traceback
 
 import tui
 from tracker import precision, classement

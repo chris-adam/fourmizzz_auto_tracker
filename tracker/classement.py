@@ -1,10 +1,11 @@
+import itertools
+import logging as lg
 import os
+import pickle
+import sys
 from datetime import datetime, timedelta
 from threading import Thread
 from time import sleep
-import logging as lg
-import pickle
-import sys
 
 import pandas as pd
 import requests
@@ -32,8 +33,10 @@ class TrackerLoop(Thread):
             if next_time <= datetime.now():
                 lg.info("Début " + str(self))
                 comp = compare()
-                if len(comp.columns) > 1:
-                    self.post_forum_thread.extend_queue(iter_correspondances(comp))
+                if len(comp.columns) > 1 and len(os.listdir("tracker/queue/")) > 0:
+                    processed_comp = self.process_comparison(comp)
+                    msg_lst = iter_correspondances(processed_comp)
+                    self.post_forum_thread.extend_queue(msg_lst)
                 lg.info("Fin " + str(self))
                 next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
             sleep(3)
@@ -44,6 +47,33 @@ class TrackerLoop(Thread):
 
         self.post_forum_thread.stop()
         self.post_forum_thread.join()
+
+    @classmethod
+    def process_comparison(cls, comparison_df):
+        comparison = comparison_df.iloc[1, 1:] - comparison_df.iloc[0, 1:]
+        processed_comp = {None: dict()}
+        r = 2
+        while r <= len(comparison):
+            for perm_index in itertools.combinations(comparison.index, r):
+                perm = comparison.loc[list(perm_index)]
+                if sum(perm) == 0:
+                    move_dict = dict()
+                    for player in perm.index:
+                        move_dict[player] = (comparison_df.loc[comparison_df.index[0], player],
+                                             comparison_df.loc[comparison_df.index[1], player])
+
+                    comparison = comparison.drop(perm.index)
+                    processed_comp.update(**{player: move_dict for player in perm.index})
+                    r = 1
+                    break
+            r += 1
+
+        if len(comparison) > 0:
+            for player in comparison.index:
+                processed_comp[None][player] = (comparison_df.loc[comparison_df.index[0], player],
+                                                comparison_df.loc[comparison_df.index[1], player])
+
+        return processed_comp
 
     def stop(self):
         self.pursue = False
@@ -129,8 +159,12 @@ def merge_files():
 def trouver_correspondance(comparaison, mouvements):
     # Vérifie que le mouvement est présent dans l'analyse du classement
     pseudo = mouvements[0]["Pseudo"]
-    if pseudo not in comparaison.columns:
-        return ""
+    if pseudo not in comparaison:
+        clef = None
+        if pseudo not in comparaison[clef]:
+            return
+    else:
+        clef = pseudo
 
     # Prépare la première partie du message concernant la cible surveillée (date + variation de tdc)
     message = ""
@@ -145,29 +179,26 @@ def trouver_correspondance(comparaison, mouvements):
                             '{:,}'.format(mouvement["Tdc avant"]).replace(",", " "),
                             '{:,}'.format(mouvement["Tdc après"]).replace(",", " "),
                             ("+" if diff > 0 else "") + '{:,}'.format(diff).replace(",", " ")))
-    diff = mouvements[-1]["Tdc après"] - mouvements[0]["Tdc avant"]
-
-    # Cherche les correspondances dans le classement
-    correspondances = list()
-    for col in comparaison.loc[:, comparaison.columns != pseudo].columns[1:]:
-        if comparaison.at[comparaison.index[1], col] - comparaison.at[comparaison.index[0], col] == -diff:
-            correspondances.append(col)
 
     message += "\n"
-    # Parfois, rien n'est trouvé: chasse, croisement de floods, échange C+, etc.
-    if len(correspondances) == 0:
-        message += "Aucune correspondance trouvée."
+    # Parfois, rien n'est trouvé: chasse, échange C+, etc.
+    if clef is None:
+        message += "Aucune correspondance trouvée.\n"
+        if len(comparaison[None]) > 1:
+            message += "Les autres correspondances orphelines sont:\n"
     # Complète le message avec la ou les correspondances possibles
-    else:
-        for correspondance in correspondances:
-            correspondance_alliance = get_alliance(correspondance)
-            message += ("[player]{}[/player]({}): {} -> {} ({})\n"
-                        .format(correspondance,
-                                "[ally]{}[/ally]".format(correspondance_alliance)
-                                if correspondance_alliance is not None else "SA",
-                                '{:,}'.format(comparaison.at[comparaison.index[0], correspondance]).replace(",", " "),
-                                '{:,}'.format(comparaison.at[comparaison.index[1], correspondance]).replace(",", " "),
-                                ("" if diff > 0 else "+") + '{:,}'.format(-diff).replace(",", " ")))
+    for correspondance, tdc in comparaison[clef].items():
+        if correspondance == pseudo:
+            continue
+        corresp_alliance = get_alliance(correspondance)
+        corresp_diff = tdc[1] - tdc[0]
+        message += ("[player]{}[/player]({}): {} -> {} ({})\n"
+                    .format(correspondance,
+                            "[ally]{}[/ally]".format(corresp_alliance)
+                            if corresp_alliance is not None else "SA",
+                            '{:,}'.format(tdc[0]).replace(",", " "),
+                            '{:,}'.format(tdc[1]).replace(",", " "),
+                            ("" if corresp_diff < 0 else "+") + '{:,}'.format(corresp_diff).replace(",", " ")))
 
     # Supprime les mouvements de la queue pour qu'ils ne soient plus analysés
     for mouvement in mouvements:
@@ -199,6 +230,21 @@ def iter_correspondances(comparaison):
     # Fusionne les records des mêmes joueurs pour prendre en compte les floods fait entre deux minutes
     dict_mouvements = dict()
     for mouvement in queue:
+        try:
+            sum_mouvement = abs(sum([m.get("Tdc après", 0) - m.get("Tdc avant", 0)
+                                     for m in dict_mouvements.get(mouvement["Pseudo"], dict())]))
+            if mouvement["Pseudo"] in comparaison:
+                classement_mouvement = comparaison[mouvement["Pseudo"]][mouvement["Pseudo"]][1] \
+                                       - comparaison[mouvement["Pseudo"]][mouvement["Pseudo"]][0]
+            else:
+                classement_mouvement = comparaison[None][mouvement["Pseudo"]][1] \
+                                       - comparaison[None][mouvement["Pseudo"]][0]
+            classement_mouvement = abs(classement_mouvement)
+            if sum_mouvement >= classement_mouvement:
+                continue
+        except KeyError:
+            continue
+
         if mouvement["Pseudo"] in dict_mouvements:
             dict_mouvements[mouvement["Pseudo"]].append(mouvement)
         else:
@@ -216,7 +262,7 @@ def iter_correspondances(comparaison):
         except KeyError:
             alliance = get_alliance(joueur)
             id_forum = cibles.at[alliance, "ID forum"]
-        if message != "":
+        if message is not None:
             to_be_posted.append((message, id_forum, joueur))
 
     return to_be_posted
