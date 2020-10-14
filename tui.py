@@ -15,12 +15,9 @@ class AutoRepair(Thread):
         self.threads = threads
 
     def run(self):
-        start_time = time()
         while self.pursue:
-            if time()-start_time > 3600//12:  # auto repair toutes les 5 minutes
-                start_time = time()
-                repair(self.threads)
-            sleep(1)
+            repair(self.threads)
+            sleep(10)
 
     def stop(self):
         self.pursue = False

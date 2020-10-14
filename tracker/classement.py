@@ -28,7 +28,7 @@ class TrackerLoop(Thread):
 
     def run(self):
         self.post_forum_thread.start()
-        next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
+        next_time = datetime.now().replace(second=10, microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
                 lg.info("Début " + str(self))
@@ -38,7 +38,7 @@ class TrackerLoop(Thread):
                     msg_lst = iter_correspondances(processed_comp)
                     self.post_forum_thread.extend_queue(msg_lst)
                 lg.info("Fin " + str(self))
-                next_time = datetime.now().replace(second=5).replace(microsecond=0) + timedelta(minutes=1)
+                next_time = datetime.now().replace(second=10, microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
             if not self.post_forum_thread.isAlive():
@@ -230,21 +230,6 @@ def iter_correspondances(comparaison):
     # Fusionne les records des mêmes joueurs pour prendre en compte les floods fait entre deux minutes
     dict_mouvements = dict()
     for mouvement in queue:
-        try:
-            sum_mouvement = abs(sum([m.get("Tdc après", 0) - m.get("Tdc avant", 0)
-                                     for m in dict_mouvements.get(mouvement["Pseudo"], dict())]))
-            if mouvement["Pseudo"] in comparaison:
-                classement_mouvement = comparaison[mouvement["Pseudo"]][mouvement["Pseudo"]][1] \
-                                       - comparaison[mouvement["Pseudo"]][mouvement["Pseudo"]][0]
-            else:
-                classement_mouvement = comparaison[None][mouvement["Pseudo"]][1] \
-                                       - comparaison[None][mouvement["Pseudo"]][0]
-            classement_mouvement = abs(classement_mouvement)
-            if sum_mouvement >= classement_mouvement:
-                continue
-        except KeyError:
-            continue
-
         if mouvement["Pseudo"] in dict_mouvements:
             dict_mouvements[mouvement["Pseudo"]].append(mouvement)
         else:

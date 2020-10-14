@@ -21,13 +21,13 @@ class TrackerLoop(Thread):
         self.pursue = True
 
     def run(self):
-        next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
+        next_time = datetime.now().replace(second=3, microsecond=0) + timedelta(minutes=1)
         while self.pursue:
             if next_time <= datetime.now():
                 lg.info("Début " + str(self))
                 TrackerLoop.iter_cibles()
                 lg.info("Fin " + str(self))
-                next_time = datetime.now().replace(second=3).replace(microsecond=0) + timedelta(minutes=1)
+                next_time = datetime.now().replace(second=3, microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
     @classmethod
