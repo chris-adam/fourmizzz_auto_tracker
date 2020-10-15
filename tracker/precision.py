@@ -25,8 +25,10 @@ class TrackerLoop(Thread):
         while self.pursue:
             if next_time <= datetime.now():
                 lg.info("Début " + str(self))
+                print("Début précision {}".format(datetime.now()))
                 TrackerLoop.iter_cibles()
                 lg.info("Fin " + str(self))
+                print("Fin précision {}".format(datetime.now()))
                 next_time = datetime.now().replace(second=3, microsecond=0) + timedelta(minutes=1)
             sleep(3)
 

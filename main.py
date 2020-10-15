@@ -3,6 +3,7 @@ import logging as lg
 import os
 import platform
 import traceback
+from pathlib import Path
 
 import tui
 from tracker import precision, classement
@@ -38,6 +39,8 @@ def init_programme():
 if __name__ == "__main__":
 
     try:
+        os.chdir(Path(__file__).parent)
+
         effacer_fichiers_temporaires()
         init_programme()
         tui.connexion()
