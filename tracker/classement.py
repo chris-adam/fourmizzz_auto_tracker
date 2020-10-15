@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 from data import get_serveur, get_identifiants
 from web import PostForum, get_alliance
 
-N_PAGES = 50
+N_PAGES = 40
 COLUMNS = ("Pseudo", "Tdc", "Fourmilière", "Technologie", "Trophées", "Alliance")
 
 
@@ -32,14 +32,14 @@ class TrackerLoop(Thread):
         while self.pursue:
             if next_time <= datetime.now():
                 lg.info("Début " + str(self))
-                print("Début classement {}".format(datetime.now()))
+                print("Début précision {}".format(datetime.now()))
                 comp = compare()
                 if len(comp.columns) > 1 and len(os.listdir("tracker/queue/")) > 0:
                     processed_comp = self.process_comparison(comp)
                     msg_lst = iter_correspondances(processed_comp)
                     self.post_forum_thread.extend_queue(msg_lst)
                 lg.info("Fin " + str(self))
-                print("Fin classement {}".format(datetime.now()))
+                print("Début précision {}".format(datetime.now()))
                 next_time = datetime.now().replace(second=10, microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
