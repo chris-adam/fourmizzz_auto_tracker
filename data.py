@@ -1,3 +1,6 @@
+import basehash
+
+
 def get_serveur():
     with open("fichiers/serveur.txt", "r") as identifiants:
         serveur = identifiants.readline().strip()
@@ -6,9 +9,10 @@ def get_serveur():
 
 
 def get_identifiants():
+    hash_fn = basehash.base94()
     with open("fichiers/identifiants.txt", "r") as identifiants:
-        pseudo = identifiants.readline().strip()
-        mdp = identifiants.readline().strip()
-        cookie = identifiants.readline().strip()
+        pseudo = hash_fn.encode(int(identifiants.readline().strip()))
+        mdp = hash_fn.encode(int(identifiants.readline().strip()))
+        cookie = hash_fn.encode(int(identifiants.readline().strip()))
 
     return pseudo, mdp, cookie

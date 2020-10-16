@@ -23,6 +23,7 @@ def wait_for_elem(driver, elem, by, tps=5, n_essais=5):
             return WebDriverWait(driver, tps).until(ec.presence_of_element_located((by, elem)))
         except (StaleElementReferenceException, TimeoutException, ElementNotInteractableException):
             sleep(2)
+    raise TimeoutException()
 
 
 def verifier_connexion():
@@ -67,35 +68,6 @@ def verifier_connexion():
     return True
 
 
-def get_driver():
-    url = "http://" + get_serveur() + ".fourmizzz.fr"
-    pseudo, mdp = get_identifiants()
-
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument("--start-maximized")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-gpu")
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    try:
-        driver = webdriver.Chrome(options=options)
-    except OSError:
-        driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver", options=options)
-
-    driver.get(url)
-    driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
-
-    wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[2]/td[2]/input", By.XPATH).click()
-    wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[2]/td[2]/input", By.XPATH).send_keys(pseudo)
-
-    wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[3]/td[2]/input", By.XPATH).click()
-    wait_for_elem(driver, "//*[@id='loginForm']/table/tbody/tr[3]/td[2]/input", By.XPATH).send_keys(mdp)
-
-    wait_for_elem(driver, "//*[@id='loginForm']/input[2]", By.XPATH).click()
-
-    return driver
-
-
 class PostForum(Thread):
     def __init__(self, queue=None):
         """
@@ -108,8 +80,7 @@ class PostForum(Thread):
         self.stopped = False
 
     def run(self):
-
-        while not self.stopped:
+        while not self.stopped or len(self.queue) > 0:
             try:
                 string, forum_id, sub_forum_name = self.queue.pop(0)
             except IndexError:

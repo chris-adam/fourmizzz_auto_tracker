@@ -53,7 +53,7 @@ class TrackerLoop(Thread):
         comparison = comparison_df.iloc[1, 1:] - comparison_df.iloc[0, 1:]
         processed_comp = {None: dict()}
         r = 2
-        while r <= len(comparison):
+        while r <= len(comparison) and r < 5:
             for perm_index in itertools.combinations(comparison.index, r):
                 perm = comparison.loc[list(perm_index)]
                 if sum(perm) == 0:
@@ -185,7 +185,7 @@ def trouver_correspondance(comparaison, mouvements):
     if clef is None:
         message += "Aucune correspondance trouvée.\n"
         if len(comparaison[None]) > 1:
-            message += "Les autres correspondances orphelines sont:\n"
+            message += "Les autres mouvements orphelins sont:\n"
     # Complète le message avec la ou les correspondances possibles
     for correspondance, tdc in comparaison[clef].items():
         if correspondance == pseudo:

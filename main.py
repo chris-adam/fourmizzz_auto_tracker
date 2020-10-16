@@ -1,4 +1,3 @@
-import argparse
 import logging as lg
 import os
 import platform
@@ -21,28 +20,10 @@ def effacer_fichiers_temporaires():
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
-def init_programme():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--info", help="Affiche les logs d'info",
-                        action="store_true")
-    args = parser.parse_args()
-    if args.info:
-        niveau = lg.INFO
-    else:
-        niveau = lg.WARNING
-
-    lg.basicConfig(format='%(levelname)s - %(asctime)-15s: %(message)s',
-                   datefmt="%Y/%m/%d %H:%M:%S",
-                   level=niveau)
-
-
 if __name__ == "__main__":
-
     try:
         os.chdir(Path(__file__).parent)
-
         effacer_fichiers_temporaires()
-        init_programme()
         tui.connexion()
 
         updaters = list()

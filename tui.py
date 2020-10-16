@@ -1,5 +1,8 @@
 from threading import Thread
-from time import time, sleep
+from time import sleep
+import basehash
+from getpass import getpass
+import sys
 
 import pandas as pd
 
@@ -94,13 +97,21 @@ def connexion():
 
 
 def update_identifiants():
-    pseudo = input("Pseudo: ")
-    mdp = input("Mot de passe: ")
-    cookie_token = input("Cookie d'auto-connection: ")
+    def safe_input(prompt):
+        if not sys.stdin.isatty():
+            msg = input(prompt)
+        else:
+            msg = getpass(prompt=prompt)
+        return msg
 
+    pseudo = input("Pseudo: ")
+    mdp = safe_input("Mot de passe: ")
+    cookie_token = safe_input("Cookie d'auto-connection: ")
+
+    hash_fn = basehash.base94()
     with open("fichiers/identifiants.txt", "w+") as identifiants:
-        identifiants.write(pseudo)
+        identifiants.write(str(hash_fn.decode(pseudo)))
         identifiants.write("\n")
-        identifiants.write(mdp)
+        identifiants.write(str(hash_fn.decode(mdp)))
         identifiants.write("\n")
-        identifiants.write(cookie_token)
+        identifiants.write(str(hash_fn.decode(cookie_token)))
