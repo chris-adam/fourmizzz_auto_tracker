@@ -7,7 +7,8 @@ import requests
 from boltons import iterutils
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchElementException, \
+    ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -20,7 +21,7 @@ def wait_for_elem(driver, elem, by, tps=5, n_essais=5):
     for i in range(n_essais):
         try:
             return WebDriverWait(driver, tps).until(ec.presence_of_element_located((by, elem)))
-        except (StaleElementReferenceException, TimeoutException):
+        except (StaleElementReferenceException, TimeoutException, ElementNotInteractableException):
             sleep(2)
 
 
