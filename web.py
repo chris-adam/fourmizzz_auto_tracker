@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchElementException, \
     ElementNotInteractableException
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
@@ -21,7 +22,7 @@ def wait_for_elem(driver, elem, by, tps=5, n_essais=5):
     for i in range(n_essais):
         try:
             return WebDriverWait(driver, tps).until(ec.presence_of_element_located((by, elem)))
-        except (StaleElementReferenceException, TimeoutException, ElementNotInteractableException):
+        except (StaleElementReferenceException, TimeoutException):
             sleep(2)
     raise TimeoutException()
 
@@ -130,9 +131,14 @@ class PostForum(Thread):
 
                         # Click to open the sub forum
                         if topic_name.lower().startswith(sub_forum_name.lower()):
-                            wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr[" + str(i) + "]/td[2]/a",
-                                          By.XPATH).click()
-                            sleep(5)  # Wait for the page to load
+                            topic_name_button = wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr["
+                                                              + str(i) + "]/td[2]/a", By.XPATH)
+                            try:
+                                topic_name_button.click()
+                            except ElementNotInteractableException:
+                                ActionChains(driver).move_to_element(topic_name_button).perform()
+                                topic_name_button.click()
+                            sleep(5)  # Wait for the page to load, it can be long if there are a lot of messages
                             break
 
                     # Waits if the element didn't load yet

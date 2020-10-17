@@ -110,8 +110,8 @@ def update_identifiants():
 
     hash_fn = basehash.base94()
     with open("fichiers/identifiants.txt", "w+") as identifiants:
-        identifiants.write(str(hash_fn.decode(pseudo)))
+        identifiants.write(" ".join([hash_fn.encode(ord(char)) for char in pseudo]))
         identifiants.write("\n")
-        identifiants.write(str(hash_fn.decode(mdp)))
+        identifiants.write(" ".join([hash_fn.encode(ord(char)) for char in mdp]))
         identifiants.write("\n")
-        identifiants.write(str(hash_fn.decode(cookie_token)))
+        identifiants.write(" ".join([hash_fn.encode(ord(char)) for char in cookie_token]))
