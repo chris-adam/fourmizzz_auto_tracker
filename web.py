@@ -144,12 +144,6 @@ class PostForum(Thread):
                     # Waits if the element didn't load yet
                     except StaleElementReferenceException:
                         sleep(1)
-                    # Leave the loop if there is no more sub forum to read
-                    except TimeoutException:
-                        lg.warning("Forum " + sub_forum_name + " introuvable ou verrouillé\n" + string)
-                        send_pm(subject="Traçage non posté",
-                                text="Forum " + sub_forum_name + " introuvable ou verrouillé\n" + string)
-                        break
                     # Go to the next sub forum
                     else:
                         i += 2
@@ -164,8 +158,13 @@ class PostForum(Thread):
                 # Click to send the message on the forum
                 driver.find_element_by_id("repondre_focus").click()
                 sleep(1)
-            except NoSuchElementException:
-                pass
+
+            except (NoSuchElementException, TimeoutException):
+                lg.warning("Forum " + sub_forum_name + " introuvable ou verrouillé\n" + string)
+                # Changer "player_name" pour le pseudo du joueur qui doit recevoir les alertes
+                # ou le supprimer pour rediriger les alertes vers le compte qui fait tourner le programme
+                send_pm(subject="Traçage non posté", player_name="vivi86",
+                        text="Forum " + sub_forum_name + " introuvable ou verrouillé\n" + string)
             else:
                 lg.info("Mouvement de tdc posté sur le forum:\n{}".format(string))
             finally:

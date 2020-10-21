@@ -227,7 +227,7 @@ def iter_correspondances(comparaison):
         else:
             queue.append(queue_elem)
 
-    # Fusionne les records des mêmes joueurs pour prendre en compte les floods fait entre deux minutes
+    # Fusionne les records des mêmes joueurs pour prendre en compte les floods fait sur plusieurs minutes
     dict_mouvements = dict()
     for mouvement in queue:
         if mouvement["Pseudo"] in dict_mouvements:
