@@ -8,7 +8,7 @@ from boltons import iterutils
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, NoSuchElementException, \
-    ElementNotInteractableException
+    ElementNotInteractableException, ElementClickInterceptedException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -159,7 +159,7 @@ class PostForum(Thread):
                 driver.find_element_by_id("repondre_focus").click()
                 sleep(1)
 
-            except (NoSuchElementException, TimeoutException):
+            except (NoSuchElementException, TimeoutException, ElementClickInterceptedException):
                 lg.warning("Forum " + sub_forum_name + " introuvable ou verrouillé\n" + string)
                 # Changer "player_name" pour le pseudo du joueur qui doit recevoir les alertes
                 # ou le supprimer pour rediriger les alertes vers le compte qui fait tourner le programme
