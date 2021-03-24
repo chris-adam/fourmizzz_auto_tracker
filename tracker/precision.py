@@ -56,15 +56,18 @@ class ComparerTdc(Thread):
         Thread.__init__(self)
         self.pseudo = pseudo
         self.url = "http://" + get_serveur() + ".fourmizzz.fr/Membre.php?Pseudo=" + self.pseudo
-        self.path = "tracker/pseudo_temp/tdc_" + self.pseudo
+        self.path_tdc = "tracker/pseudo_temp/tdc_" + self.pseudo
+        self.path_trophees = "tracker/pseudo_trophees_temp/trophees_" + self.pseudo
 
     def run(self):
-        if not os.path.exists(self.path):
+        if not os.path.exists(self.path_tdc) or not os.path.exists(self.path_trophees):
             self.scrap_tdc()
 
-        with open(self.path, "r") as file:
+        with open(self.path_tdc, "r") as file:
             old_tdc = int(file.readline().strip())
-        new_tdc = self.scrap_tdc()
+        with open(self.path_trophees, "r") as file:
+            old_trophees = int(file.readline().strip())
+        new_tdc, new_trophees = self.scrap_tdc()
 
         if new_tdc is not None and old_tdc != new_tdc:
             queue = {"Date": datetime.now(),
@@ -76,6 +79,18 @@ class ComparerTdc(Thread):
                 pickle.dump(queue, file)
             lg.info("Ajouté à la queue: {}".format(queue))
 
+        if new_trophees is not None and old_trophees != new_trophees:
+            queue = {"Date": datetime.now(),
+                     "Pseudo": self.pseudo,
+                     "Trophees avant": old_trophees,
+                     "Trophees après": new_trophees,
+                     "File name": "tracker/queue_trophees/" + datetime.now().strftime("%Y-%m-%d_%Hh%M") + "_" + self.pseudo}
+            with open(queue["File name"], "wb+") as file:
+                pickle.dump(queue, file)
+
+            print(queue)
+            lg.info("Ajouté à la queue: {}".format(queue))
+
     def scrap_tdc(self):
         cookies = {'PHPSESSID': get_identifiants()[-1]}
         try:
@@ -84,7 +99,13 @@ class ComparerTdc(Thread):
             lg.error("Erreur lors de l'ouverture du profil de {}".format(self.pseudo))
             return
         soup = BeautifulSoup(r.text, "html.parser")
+
         tdc = soup.find("table", {"class": "tableau_score"}).find_all("tr")[1].find_all("td")[1].text.replace(" ", "")
-        with open(self.path, "w+") as file:
+        with open(self.path_tdc, "w+") as file:
             file.write(tdc)
-        return int(tdc)
+
+        trophees = soup.find("table", {"class": "tableau_score"}).find_all("tr")[4].find_all("td")[1].text.replace(" ", "")
+        with open(self.path_trophees, "w+") as file:
+            file.write(trophees)
+
+        return int(tdc), int(trophees)

@@ -11,7 +11,11 @@ from tracker import precision, classement
 def effacer_fichiers_temporaires():
     # Efface les fichiers de sauvegarde de tdc pour éviter les incohérences lors du prochain lancement
     lg.info("Suppression des fichiers temporaires...")
-    for folder in ("tracker/pseudo_temp/", "tracker/tdc_temp/", "tracker/queue/"):
+    for folder in ("tracker/pseudo_temp/",
+                   "tracker/tdc_temp/",
+                   "tracker/queue/",
+                   "tracker/pseudo_trophees_temp/",
+                   "tracker/queue_trophees/"):
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             try:
