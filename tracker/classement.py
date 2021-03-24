@@ -178,9 +178,6 @@ def compare():
     df_trophees = df_trophees.dropna(axis=1)
     df_trophees = df_trophees.loc[:, (df_trophees != df_trophees.iloc[0]).any()]
 
-    if len(df_trophees.columns) > 1:
-        print(df_trophees)
-
     return df_tdc, df_trophees
 
 

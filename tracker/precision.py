@@ -88,7 +88,6 @@ class ComparerTdc(Thread):
             with open(queue["File name"], "wb+") as file:
                 pickle.dump(queue, file)
 
-            print(queue)
             lg.info("Ajouté à la queue: {}".format(queue))
 
     def scrap_tdc(self):
