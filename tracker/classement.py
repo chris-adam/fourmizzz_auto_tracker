@@ -302,7 +302,7 @@ def trouver_correspondance_trophees(comparaison, mouvements):
     for mouvement in mouvements:
         diff = mouvement["Trophees après"] - mouvement["Trophees avant"]
         pseudo_alliance = get_alliance(mouvement["Pseudo"])
-        message += ("[b]Trophées[/b] {}\n[player]{}[/player]({}): {} -> {} ({})\n"
+        message += ("[color=#c5130f][b]Trophées[/b][/color] {}\n[player]{}[/player]({}): {} -> {} ({})\n"
                     .format(mouvement["Date"].strftime("%d/%m/%Y %H:%M"),
                             mouvement["Pseudo"],
                             "[ally]{}[/ally]".format(pseudo_alliance) if pseudo_alliance is not None else "SA",
