@@ -194,7 +194,7 @@ def get_list_joueurs_dans_alliance(tag):
             for sub_cell in cell:
                 lst.append(sub_cell)
         if len(lst) == len(titles):
-            releve = releve.append(pd.DataFrame({i: [a] for i, a in zip(titles, lst)}))
+            releve = pd.concat([releve, pd.DataFrame({i: [a] for i, a in zip(titles, lst)})])
 
     return list(pseudo.text for pseudo in releve["Pseudo"])
 

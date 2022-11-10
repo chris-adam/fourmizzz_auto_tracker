@@ -1,5 +1,7 @@
-/fichiers/identifiants.txt
-/build/
-/tracker/pseudo_temp/*
-/tracker/queue/*
-/tracker/tdc_temp/*
+fichiers/identifiants.txt
+fichiers/cibles
+build/
+tracker/*/*
+chromedriver.exe
+desktop.ini
+venv/
