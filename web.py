@@ -89,7 +89,7 @@ class PostForum(Thread):
                 continue
             forum_id = "forum" + forum_id
 
-            url = "http://s4.fourmizzz.fr/alliance.php?forum_menu"
+            url = "http://" + get_serveur() + ".fourmizzz.fr/alliance.php?forum_menu"
 
             options = webdriver.ChromeOptions()
             options.add_argument('--headless')
@@ -103,7 +103,7 @@ class PostForum(Thread):
                 driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver", options=options)
 
             try:
-                driver.get("http://s4.fourmizzz.fr")
+                driver.get("http://" + get_serveur() + ".fourmizzz.fr")
                 driver.add_cookie({'name': "PHPSESSID", 'value': get_identifiants()[-1]})
                 driver.get(url)
 
@@ -194,7 +194,7 @@ def get_list_joueurs_dans_alliance(tag):
             for sub_cell in cell:
                 lst.append(sub_cell)
         if len(lst) == len(titles):
-            releve = releve.append(pd.DataFrame({i: [a] for i, a in zip(titles, lst)}))
+            releve = pd.concat([releve, pd.DataFrame({i: [a] for i, a in zip(titles, lst)})])
 
     return list(pseudo.text for pseudo in releve["Pseudo"])
 

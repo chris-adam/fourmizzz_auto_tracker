@@ -50,15 +50,13 @@ def main_menu(updaters):
                 with pd.option_context("display.max_rows", None):
                     print(cibles)
             elif choice == 2:
-                cibles = cibles.append(pd.DataFrame({"Type": ["Joueur"],
-                                                     "Nom": [input("Nom du joueur: ")],
-                                                     "ID forum": [input("ID du forum (seulement les chiffres): ")]}),
-                                       ignore_index=True)
+                cibles = pd.concat([cibles, pd.DataFrame({"Type": ["Joueur"],
+                                 "Nom": [input("Nom du joueur: ")],
+                                 "ID forum": [input("ID du forum (seulement les chiffres): ")]})], ignore_index=True)
             elif choice == 3:
-                cibles = cibles.append(pd.DataFrame({"Type": ["Alliance"],
-                                                     "Nom": [input("Nom de l'alliance: ")],
-                                                     "ID forum": [input("ID du forum (seulement les chiffres): ")]}),
-                                       ignore_index=True)
+                cibles = pd.concat([cibles, pd.DataFrame({"Type": ["Alliance"],
+                                 "Nom": [input("Nom de l'alliance: ")],
+                                 "ID forum": [input("ID du forum (seulement les chiffres): ")]})], ignore_index=True)
             elif choice == 4:
                 print(cibles)
                 ligne_a_supprimer = int(input("Numéro de la ligne à supprimer: "))
@@ -81,7 +79,7 @@ def main_menu(updaters):
 
 def repair(updaters):
     for updater in updaters:
-        if not updater.isAlive():
+        if not updater.is_alive():
             updaters.remove(updater)
             new_thread = type(updater)()
             new_thread.start()

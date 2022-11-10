@@ -51,7 +51,7 @@ class TrackerLoop(Thread):
                 next_time = datetime.now().replace(second=10, microsecond=0) + timedelta(minutes=1)
             sleep(3)
 
-            if not self.post_forum_thread.isAlive():
+            if not self.post_forum_thread.is_alive():
                 self.post_forum_thread = PostForum(self.post_forum_thread.queue)
                 self.post_forum_thread.start()
 
@@ -126,7 +126,8 @@ class TdcSaver(Thread):
                 pseudo, alliance = elems[1].find_all("a")
                 elems[1] = pseudo
                 elems[len(elems)] = alliance
-            df = df.append(pd.DataFrame({i: [elem.text] for i, elem in elems.items()}, index=[0]), ignore_index=True)
+
+            df = pd.concat([pd.DataFrame({i: [elem.text] for i, elem in elems.items()}, index=[0])], ignore_index=True)
 
         df.drop(0, axis=1, inplace=True)
         df.dropna(axis=1, inplace=True)
@@ -184,7 +185,7 @@ def compare():
 def merge_files():
     df = pd.DataFrame(columns=COLUMNS)
     for page in range(1, N_PAGES+1):
-        df = df.append(pd.read_pickle("tracker/tdc_temp/tdc_" + str(page)), ignore_index=True)
+        df = pd.concat([df, pd.read_pickle("tracker/tdc_temp/tdc_" + str(page))], ignore_index=True)
 
     return df
 
