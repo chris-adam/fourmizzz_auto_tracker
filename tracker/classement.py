@@ -127,7 +127,8 @@ class TdcSaver(Thread):
                 elems[1] = pseudo
                 elems[len(elems)] = alliance
 
-            df = pd.concat([pd.DataFrame({i: [elem.text] for i, elem in elems.items()}, index=[0])], ignore_index=True)
+            df = pd.concat([df, pd.DataFrame({i: [elem.text] for i, elem in elems.items()}, index=[0])],
+                           ignore_index=True)
 
         df.drop(0, axis=1, inplace=True)
         df.dropna(axis=1, inplace=True)
