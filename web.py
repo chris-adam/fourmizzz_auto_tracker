@@ -63,7 +63,6 @@ def verifier_connexion():
     except TimeoutException:
         return False
     finally:
-        driver.close()
         driver.quit()
 
     return True
@@ -168,7 +167,6 @@ class PostForum(Thread):
             else:
                 lg.info("Mouvement de tdc posté sur le forum:\n{}".format(string))
             finally:
-                driver.close()
                 driver.quit()
 
     def extend_queue(self, new_msg):
@@ -249,5 +247,4 @@ def send_pm(player_name=None, subject="", text="No text"):
         wait_for_elem(driver, "/html/body/div[4]/div[1]/div[6]/div[1]/div[4]/span[1]/input", By.XPATH, 50).click()
         sleep(1)
     finally:
-        driver.close()
         driver.quit()
