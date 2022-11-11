@@ -119,8 +119,8 @@ class PostForum(Thread):
                 while i > 0:
                     try:
                         # If the topic is locked, don't even try
-                        if (len(driver.find_elements_by_xpath("//*[@id='form_cat']/table/tbody/tr["
-                                                              + str(i) + "]/td[2]/img")) > 0
+                        if (len(driver.find_elements(By.XPATH, "//*[@id='form_cat']/table/tbody/tr["
+                                                               + str(i) + "]/td[2]/img")) > 0
                                 and wait_for_elem(driver, "//*[@id='form_cat']/table/tbody/tr["+str(i)+"]/td[2]/img",
                                                   By.XPATH).get_attribute('alt') == "Fermé"):
                             i += 2
@@ -154,9 +154,9 @@ class PostForum(Thread):
                 # Enter text in the form
                 wait_for_elem(driver, "message", By.ID).click()
                 for msg in iterutils.chunked(string, 32):
-                    driver.find_element_by_id("message").send_keys(msg)
+                    driver.find_element(By.ID, "message").send_keys(msg)
                 # Click to send the message on the forum
-                driver.find_element_by_id("repondre_focus").click()
+                driver.find_element(By.ID, "repondre_focus").click()
                 sleep(1)
 
             except (NoSuchElementException, TimeoutException, ElementClickInterceptedException):

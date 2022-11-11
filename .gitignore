@@ -1,7 +1,11 @@
 fichiers/identifiants.txt
 fichiers/cibles
 build/
-tracker/*/*
+tracker/
+!tracker/classement.py
+!tracker/precision.py
 chromedriver.exe
 desktop.ini
 venv/
+.idea/
+__pycache__/
