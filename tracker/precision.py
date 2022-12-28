@@ -98,7 +98,6 @@ class ComparerTdc(Thread):
             lg.error("Erreur lors de l'ouverture du profil de {}".format(self.pseudo))
             return
         soup = BeautifulSoup(r.text, "html.parser")
-        print(soup.text)
 
         tdc = soup.find("table", {"class": "tableau_score"}).find_all("tr")[1].find_all("td")[1].text.replace(" ", "")
         with open(self.path_tdc, "w+") as file:
