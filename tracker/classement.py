@@ -15,7 +15,7 @@ from data import get_serveur, get_identifiants
 from web import PostForum, get_alliance
 # import tui
 
-N_PAGES = 40
+N_PAGES = 20
 COLUMNS = ("Pseudo", "Tdc", "Fourmilière", "Technologie", "Trophées", "Alliance")
 
 
@@ -155,14 +155,14 @@ def compare():
 
     # df pour le tdc
     releve_1 = merge_files()
-    releve_1_tdc = pd.DataFrame({row[0]: [row[1]] for index, row in releve_1.loc[:, ["Pseudo", "Tdc", "Trophées"]].iterrows()})
+    releve_1_tdc = pd.DataFrame({row.iloc[0]: [row.iloc[1]] for index, row in releve_1.loc[:, ["Pseudo", "Tdc", "Trophées"]].iterrows()})
     date = os.path.getmtime("tracker/tdc_temp/tdc_1")
     date = datetime.fromtimestamp(date).replace(microsecond=0)
     releve_1_tdc = pd.concat([pd.DataFrame(dict(Date=[date])), releve_1_tdc], axis=1)
 
     scrap_tdc()
     releve_2 = merge_files()
-    releve_2_tdc = pd.DataFrame({row[0]: [row[1]] for index, row in releve_2.loc[:, ["Pseudo", "Tdc", "Trophées"]].iterrows()})
+    releve_2_tdc = pd.DataFrame({row.iloc[0]: [row.iloc[1]] for index, row in releve_2.loc[:, ["Pseudo", "Tdc", "Trophées"]].iterrows()})
     releve_2_tdc = pd.concat([pd.DataFrame(dict(Date=[datetime.now().replace(microsecond=0)])), releve_2_tdc], axis=1)
 
     df_tdc = pd.concat([releve_1_tdc, releve_2_tdc], axis=0, ignore_index=True)
@@ -170,10 +170,10 @@ def compare():
     df_tdc = df_tdc.loc[:, (df_tdc != df_tdc.iloc[0]).any()]
 
     # df pour les trophées
-    releve_1_trophees = pd.DataFrame({row[0]: [row[1]] for index, row in releve_1.loc[:, ["Pseudo", "Trophées"]].iterrows()})
+    releve_1_trophees = pd.DataFrame({row.iloc[0]: [row.iloc[1]] for index, row in releve_1.loc[:, ["Pseudo", "Trophées"]].iterrows()})
     releve_1_trophees = pd.concat([pd.DataFrame(dict(Date=[date])), releve_1_trophees], axis=1)
 
-    releve_2_trophees = pd.DataFrame({row[0]: [row[1]] for index, row in releve_2.loc[:, ["Pseudo", "Trophées"]].iterrows()})
+    releve_2_trophees = pd.DataFrame({row.iloc[0]: [row.iloc[1]] for index, row in releve_2.loc[:, ["Pseudo", "Trophées"]].iterrows()})
     releve_2_trophees = pd.concat([pd.DataFrame(dict(Date=[datetime.now().replace(microsecond=0)])), releve_2_trophees], axis=1)
 
     df_trophees = pd.concat([releve_1_trophees, releve_2_trophees], axis=0, ignore_index=True)

@@ -1,7 +1,7 @@
-pandas
-requests
-bs4
-urllib3
-selenium
-boltons
-basehash
+pandas==2.2.2
+requests==2.32.3
+bs4==0.0.2
+urllib3==2.2.2
+selenium==4.23.1
+boltons==24.0.0
+BaseHash==3.0.10
