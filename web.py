@@ -202,8 +202,13 @@ def get_alliance(pseudo):
     cookies = {'PHPSESSID': get_identifiants()[-1]}
     r = requests.get(url, cookies=cookies)
     soup = BeautifulSoup(r.text, "html.parser")
+    # Le joueur a une alliance
     try:
         return soup.find("div", {"class": "boite_membre"}).find("table").find("tr").find_all("td")[1].find("a").text
+    # Le joueur est en vacances
+    except IndexError:
+        return soup.find("div", {"class": "boite_membre"}).find("table").find_all("tr")[1].find_all("td")[1].find("a").text
+    # Le joueur n'a pas d'alliance
     except AttributeError:
         return
 
