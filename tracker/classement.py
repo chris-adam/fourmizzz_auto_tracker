@@ -15,7 +15,7 @@ from data import get_serveur, get_identifiants
 from web import PostForum, get_alliance
 # import tui
 
-N_PAGES = 20
+N_PAGES = 40
 COLUMNS = ("Pseudo", "Tdc", "Fourmilière", "Technologie", "Trophées", "Alliance")
 
 
