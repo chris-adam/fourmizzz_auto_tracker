@@ -1,7 +1,7 @@
 pandas==2.2.2
 requests==2.32.3
 bs4==0.0.2
-urllib3==2.2.2
+urllib3==2.6.0
 selenium==4.23.1
 boltons==24.0.0
 BaseHash==3.0.10
